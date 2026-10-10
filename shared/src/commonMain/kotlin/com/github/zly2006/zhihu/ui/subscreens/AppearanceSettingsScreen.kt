@@ -201,7 +201,7 @@ internal fun defaultBottomBarSelectionKeys(
 } else if (duo3HomeAccount) {
     linkedSetOf(Home.name, Follow.name)
 } else {
-    linkedSetOf(Home.name, Follow.name, HotList.name, OnlineHistory.name, Account.name)
+    linkedSetOf(Home.name, Follow.name, OnlineHistory.name, Account.name)
 }
 
 internal fun normalizeBottomBarSelection(

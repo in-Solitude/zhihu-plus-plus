@@ -42,7 +42,7 @@ class ZhihuMainPreferencesTest {
             defaultBottomBarSelectionKeys(duo3HomeAccount = true),
         )
         assertEquals(
-            linkedSetOf(Home.name, Follow.name, HotList.name, OnlineHistory.name, Account.name),
+            linkedSetOf(Home.name, Follow.name, OnlineHistory.name, Account.name),
             defaultBottomBarSelectionKeys(duo3HomeAccount = false),
         )
     }
