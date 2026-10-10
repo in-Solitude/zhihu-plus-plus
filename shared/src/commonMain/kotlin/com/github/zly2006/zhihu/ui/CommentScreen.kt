@@ -1263,6 +1263,20 @@ private fun CommentItem(
             urlToken = commentData.author.urlToken,
         )
     var showMoreMenu by remember(commentData.id) { mutableStateOf(false) }
+    var revealBlacklisted by remember(commentData.id) { mutableStateOf(false) }
+
+    if (commentData.hiddenByZhihuBlacklist && !revealBlacklisted) {
+        Text(
+            text = "已屏蔽 · 规则：知乎黑名单用户「${commentData.author.name}」，点击显示",
+            fontSize = 13.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = modifier
+                .fillMaxWidth()
+                .clickable { revealBlacklisted = true }
+                .padding(vertical = 6.dp),
+        )
+        return
+    }
 
     Column(modifier = modifier.fillMaxWidth()) {
         // 作者信息

@@ -45,6 +45,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -122,6 +123,7 @@ import com.github.zly2006.zhihu.viewmodel.ZhihuApiEnvironment
 import com.github.zly2006.zhihu.viewmodel.addReadHistory
 import com.github.zly2006.zhihu.viewmodel.deleteSigned
 import com.github.zly2006.zhihu.viewmodel.feed.BaseFeedViewModel
+import com.github.zly2006.zhihu.viewmodel.filter.ZhihuBlacklist
 import com.github.zly2006.zhihu.viewmodel.postSigned
 import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
 import kotlinx.coroutines.CancellationException
@@ -417,6 +419,7 @@ class PersonViewModel(
         } else {
             environment.deleteSigned(blockUrl)
         }.raiseForStatus()
+        ZhihuBlacklist.remember(environment, memberHashId, newBlockingState)
         isBlocking = newBlockingState
     }
 
@@ -599,6 +602,7 @@ const val PEOPLE_SCREEN_BLOCK_BUTTON_TAG = "people_screen_block_button"
 const val PEOPLE_SCREEN_RECOMMENDATION_BLOCK_BUTTON_TAG = "people_screen_recommendation_block_button"
 const val PEOPLE_SCREEN_QUESTION_AUTHOR_BLOCK_BUTTON_TAG = "people_screen_question_author_block_button"
 const val PEOPLE_SCREEN_SEARCH_BUTTON_TAG = "people_screen_search_button"
+const val PEOPLE_SCREEN_BACK_BUTTON_TAG = "people_screen_back_button"
 const val PEOPLE_SCREEN_GITHUB_STARS_TAG = "people_screen_github_stars"
 const val PEOPLE_SCREEN_ANSWER_SORT_HOT_TAG = "people_screen_answer_sort_voteups"
 const val PEOPLE_SCREEN_ANSWER_SORT_TIME_TAG = "people_screen_answer_sort_created"
@@ -749,7 +753,7 @@ fun PeopleScreen(
                             viewModel = viewModel,
                             pagerState = pagerState,
                             modifier = Modifier
-                                .padding(horizontal = 8.dp)
+                                .padding(start = 8.dp, end = 8.dp, top = 40.dp) // 顶部空出返回按钮
                                 .testTag(PEOPLE_SCREEN_HEADER_TAG),
                             onFollowToggle = {
                                 coroutineScope.launch {
@@ -837,6 +841,16 @@ fun PeopleScreen(
                             }
                         },
                 )
+                // 展开时位于头像上方的留白里；收起后落在标签栏左侧的默认 52dp 起始留白内，两种状态都可点
+                IconButton(
+                    onClick = navigator.onNavigateBack,
+                    modifier = Modifier
+                        .align(Alignment.TopStart)
+                        .background(MaterialTheme.colorScheme.surface, CircleShape)
+                        .testTag(PEOPLE_SCREEN_BACK_BUTTON_TAG),
+                ) {
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                }
                 if (viewModel.memberHashId.isNotBlank() && viewModel.memberHashId != Person.EMPTY_ID) {
                     IconButton(
                         onClick = {

@@ -21,6 +21,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
+import kotlinx.serialization.Transient
 import kotlinx.serialization.descriptors.SerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
@@ -688,6 +689,9 @@ object DataHolder {
         val isVisibleOnlyToMyself: Boolean = false,
         @SerialName("_")
         val underscore: JsonElement? = null,
+        /** 作者在当前账号的知乎黑名单里：评论仍留在列表中，界面先显示一行占位，点开才展示。 */
+        @Transient
+        val hiddenByZhihuBlacklist: Boolean = false,
     ) {
         @Serializable
         data class Author(

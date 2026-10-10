@@ -48,6 +48,9 @@ import com.github.zly2006.zhihu.ui.subscreens.DEFAULT_FAB_OPACITY
 import com.github.zly2006.zhihu.ui.subscreens.PREF_FAB_OPACITY
 import kotlin.math.roundToInt
 
+// 吸附到左右边缘时留出的间距，和知乎官方悬浮按钮一样不贴屏幕边
+private val FAB_EDGE_MARGIN = 12.dp
+
 /**
  * 可拖动并自动贴边的刷新按钮。
  *
@@ -89,7 +92,7 @@ fun DraggableRefreshButton(
 
     fun adjustFabPosition() {
         with(density) {
-            offsetX = offsetX.coerceIn(0f, screenSize.width - 56.dp.toPx())
+            offsetX = offsetX.coerceIn(FAB_EDGE_MARGIN.toPx(), screenSize.width - 56.dp.toPx() - FAB_EDGE_MARGIN.toPx())
             offsetY = offsetY.coerceIn(0f, maxStoredOffsetY)
         }
     }
@@ -141,9 +144,9 @@ fun DraggableRefreshButton(
                         with(density) {
                             offsetX =
                                 if (offsetX < screenWidth / 2) {
-                                    0f
+                                    FAB_EDGE_MARGIN.toPx()
                                 } else {
-                                    screenWidth - 56.dp.toPx()
+                                    screenWidth - 56.dp.toPx() - FAB_EDGE_MARGIN.toPx()
                                 }
                         }
                         settings.putFloat("$preferenceName-x", offsetX)

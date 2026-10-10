@@ -56,8 +56,8 @@ import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
+import androidx.compose.material.icons.filled.KeyboardDoubleArrowDown
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -1211,7 +1211,7 @@ fun ArticleScreen(
                 if (answerNavigationState.navigatingToNextAnswer) {
                     CircularProgressIndicator(modifier = Modifier.size(30.dp))
                 } else {
-                    Icon(Icons.Filled.SkipNext, contentDescription = "下一个回答")
+                    Icon(Icons.Filled.KeyboardDoubleArrowDown, contentDescription = "下一个回答")
                 }
             }
         }

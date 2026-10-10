@@ -23,6 +23,7 @@ import com.github.zly2006.zhihu.data.Person
 import com.github.zly2006.zhihu.data.ZhihuJson
 import com.github.zly2006.zhihu.data.target
 import com.github.zly2006.zhihu.viewmodel.PaginationEnvironment
+import com.github.zly2006.zhihu.viewmodel.filter.BlacklistEnvironment
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.respond
@@ -30,6 +31,7 @@ import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
 import io.ktor.http.headersOf
+import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlin.test.Test
@@ -77,6 +79,17 @@ class SearchViewModelTest {
         )
     }
 
+    @Test
+    fun searchResultsExcludeAuthorsBlacklistedByAccount() = runTest {
+        val viewModel = TestSearchViewModel()
+        val blacklisted = answerFeed(id = 1, authorId = "blacklisted-id", urlToken = "blacklisted-token")
+        val kept = answerFeed(id = 2, authorId = "kept-id", urlToken = "kept-token")
+        val environment = BlacklistEnvironment(login = "search", blacklistedTokens = setOf("blacklisted-token"))
+
+        assertEquals(listOf<Feed>(kept), viewModel.filterBlacklisted(environment, listOf(blacklisted, kept)))
+        assertEquals(listOf("blacklisted-token", "kept-token"), environment.lookups.sorted())
+    }
+
     private class TestSearchViewModel : SearchViewModel("query") {
         override fun refresh(environment: PaginationEnvironment) = Unit
 
@@ -84,6 +97,11 @@ class SearchViewModelTest {
             environment: PaginationEnvironment,
             feeds: List<Feed>,
         ) = processResponse(environment, feeds, JsonArray(emptyList()))
+
+        suspend fun filterBlacklisted(
+            environment: PaginationEnvironment,
+            feeds: List<Feed>,
+        ) = applyZhihuBlacklist(environment, feeds)
     }
 
     private fun environment(
@@ -119,6 +137,7 @@ class SearchViewModelTest {
     private fun answerFeed(
         id: Long,
         authorId: String,
+        urlToken: String? = null,
     ) = CommonFeed(
         id = id.toString(),
         verb = "SEARCH_RESULT",
@@ -129,6 +148,7 @@ class SearchViewModelTest {
                 id = authorId,
                 url = "https://www.zhihu.com/people/$authorId",
                 userType = "people",
+                urlToken = urlToken,
                 name = authorId,
                 headline = "",
                 avatarUrl = "",

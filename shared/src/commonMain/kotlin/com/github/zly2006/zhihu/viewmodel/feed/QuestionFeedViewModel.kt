@@ -43,6 +43,10 @@ open class QuestionFeedViewModel(
     override val initialUrl: String
         get() = zhihuQuestionFeedsUrl(questionId, limit = 20, order = sortOrder)
 
+    // 知乎对 include 的解析与顺序有关：author.is_blocking 放在 target.author.badge_v2 之前才会返回，
+    // 放到末尾会被静默丢弃（2026-10 用真实账号的拉黑样本实测，其余字段与默认 include 完全一致）。
+    override val include = "data[*].content,excerpt,headline,author.is_blocking,target.author.badge_v2"
+
     fun updateSortOrder(order: String) {
         if (sortOrder != order) {
             sortOrder = order
@@ -103,13 +107,10 @@ open class QuestionFeedViewModel(
 
     override fun processResponse(environment: PaginationEnvironment, data: List<Feed>, rawData: kotlinx.serialization.json.JsonArray) {
         val blockedUserIds = environment.blockedUserIds()
-        val filtered = if (blockedUserIds.isEmpty()) {
-            data
-        } else {
-            data.filterNot { feed ->
-                val target = feed.target
-                target is Feed.AnswerTarget && target.author?.id in blockedUserIds
-            }
+        val hideBlacklisted = environment.feedDisplaySettings().hideZhihuBlacklistedUsers
+        val filtered = data.filterNot { feed ->
+            val author = (feed.target as? Feed.AnswerTarget)?.author
+            author?.id in blockedUserIds || (hideBlacklisted && author?.isBlocking == true)
         }
         super.processResponse(environment, filtered, rawData)
     }

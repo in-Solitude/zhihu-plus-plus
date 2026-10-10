@@ -110,6 +110,7 @@ URL 解析集中在 `resolveContent()`。支持知乎问题、回答、文章、
 | `filterFollowedUserContent` | 过滤已关注用户内容 | 是否过滤关注用户内容 | 仅智能过滤开启时可操作 |
 | `enableKeywordBlocking` | 关键词屏蔽 | 命中关键词时过滤 | 管理入口在 Blocklist |
 | `enableUserBlocking` | 用户屏蔽 | 命中用户时过滤 | Feed 卡片更多菜单可新增屏蔽 |
+| `hideZhihuBlacklistedUsers` | 隐藏知乎黑名单用户 | 问题回答流、搜索结果中隐藏知乎账号黑名单里的作者；评论保留一行“已屏蔽 · 规则：…”占位，点击才展开 | 默认开启；问题回答流靠 include 取 `is_blocking`，评论和搜索按作者查询并缓存，首页推荐由知乎自己过滤；读取点是 `FeedDisplaySettings` |
 | `enableTopicBlocking` | 主题屏蔽 | 命中主题时过滤 | 阈值项只在开启时显示 |
 | `topicBlockingThreshold` | 主题屏蔽阈值 | 命中主题数量下限 | 必须为大于 0 的整数 |
 | `blockZhihuAdPlatform` | 屏蔽知乎广告平台内容 | 匹配 `xg.zhihu.com` | 推广过滤 |

@@ -114,6 +114,9 @@ abstract class PaginationViewModel<T : Any>(
 
     protected open fun handlePageMetadata(json: JsonObject) = Unit
 
+    /** 只作用于服务端分页返回的数据，处理当前账号知乎黑名单里的作者（搜索直接剔除，评论标记为占位）；用户主动打开的目标不经过这里。 */
+    protected open suspend fun applyZhihuBlacklist(environment: PaginationEnvironment, data: List<T>): List<T> = data
+
     protected open fun processResponse(environment: PaginationEnvironment, data: List<T>, rawData: JsonArray) {
         debugData.addAll(rawData) // 保存原始JSON
         allData.addAll(data) // 保存未flatten的数据
@@ -153,7 +156,7 @@ abstract class PaginationViewModel<T : Any>(
 
             val jsonArray = json["data"] as? JsonArray
                 ?: throw RuntimeException("您可能已被风控，请重新登录。", Exception("cause: no $.data"))
-            processResponse(environment, decodePage(environment, jsonArray), jsonArray)
+            processResponse(environment, applyZhihuBlacklist(environment, decodePage(environment, jsonArray)), jsonArray)
             if ("paging" in json) {
                 lastPaging = decodeJson(json["paging"]!!)
             }
@@ -547,6 +550,7 @@ data class FeedDisplaySettings(
     val qualityFilterMode: QualityFilterMode = QualityFilterMode.RULES,
     val qualityFilter: QualityFilterSettings = QualityFilterSettings(),
     val reverseBlock: Boolean = false,
+    val hideZhihuBlacklistedUsers: Boolean = false,
 )
 
 enum class QualityFilterMode {
@@ -555,6 +559,7 @@ enum class QualityFilterMode {
     HIDE,
 }
 
+const val HIDE_ZHIHU_BLACKLISTED_USERS_PREFERENCE_KEY = "hideZhihuBlacklistedUsers"
 const val QUALITY_FILTER_MODE_PREFERENCE_KEY = "qualityFilterMode"
 const val ANSWER_VOTEUP_THRESHOLD_PREFERENCE_KEY = "answerVoteupThreshold"
 const val ARTICLE_VOTEUP_THRESHOLD_PREFERENCE_KEY = "articleVoteupThreshold"

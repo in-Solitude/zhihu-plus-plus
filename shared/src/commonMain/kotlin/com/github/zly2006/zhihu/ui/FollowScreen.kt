@@ -21,14 +21,13 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -46,15 +45,14 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,10 +61,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.ViewModel
@@ -100,9 +104,10 @@ import com.github.zly2006.zhihu.viewmodel.feed.FollowViewModel
 import com.github.zly2006.zhihu.viewmodel.feed.RecentMomentsViewModel
 import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
 import kotlinx.coroutines.launch
+import kotlin.math.roundToInt
 
 class FollowScreenData : ViewModel() {
-    var selectedTabIndex by mutableIntStateOf(0)
+    var selectedTabIndex by mutableIntStateOf(1) // 与知乎 App 一致，默认进入“动态”
 }
 
 const val FOLLOW_SCREEN_TAB_ROW_TAG = "follow_screen_tab_row"
@@ -143,7 +148,7 @@ fun FollowScreen(
 /**
  * 关注页的实际布局实现。
  *
- * 页面内部用横向 pager 承载“推荐”和“动态”两个 tab，并把 tab 切换、列表刷新、加载更多和主壳的回到顶部触发集中在这里。
+ * 顶部固定常看作者头像栏和“推荐/最新”切换小按钮，下面用禁止手势滑动的 pager 承载两页列表，并把 tab 切换、列表刷新、加载更多和主壳的回到顶部触发集中在这里。
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -154,7 +159,7 @@ private fun FollowScreenContent(
     isActive: Boolean,
 ) {
     val viewModel = viewModel { FollowScreenData() }
-    val titles = listOf("推荐", "动态")
+    val titles = listOf("推荐", "最新")
     val pagerState = rememberPagerState(
         initialPage = viewModel.selectedTabIndex,
         pageCount = { titles.size },
@@ -165,24 +170,55 @@ private fun FollowScreenContent(
         viewModel.selectedTabIndex = pagerState.currentPage
     }
 
-    Column(modifier = Modifier.padding(bottom = innerPadding.calculateBottomPadding())) {
-        FollowTabRow(
-            pagerState = pagerState,
-            selectedTabIndex = pagerState.currentPage,
-            onTabSelected = { index ->
-                viewModel.selectedTabIndex = index
-                coroutineScope.launch {
-                    pagerState.animateScrollToPage(index)
-                }
-            },
-            modifier = Modifier
-                .padding(
-                    top = innerPadding.calculateTopPadding(),
-                ),
-        )
+    // 与知乎 App 一致：常看作者头像栏和“推荐/最新”小按钮在最上面。切换两页时它们不动；
+    // 上滑列表时先把它们收起，下滑时先把它们放出来，再滚动列表本身。
+    var headerHeightPx by remember { mutableIntStateOf(0) }
+    var headerOffsetPx by remember { mutableFloatStateOf(0f) }
+    val headerScrollConnection = remember {
+        object : NestedScrollConnection {
+            override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+                val newOffset = (headerOffsetPx + available.y).coerceIn(-headerHeightPx.toFloat(), 0f)
+                val consumed = newOffset - headerOffsetPx
+                headerOffsetPx = newOffset
+                return Offset(0f, consumed)
+            }
+        }
+    }
 
+    Column(
+        modifier = Modifier
+            .padding(top = innerPadding.calculateTopPadding(), bottom = innerPadding.calculateBottomPadding())
+            .nestedScroll(headerScrollConnection),
+    ) {
+        Column(
+            modifier = Modifier
+                .clipToBounds()
+                .layout { measurable, constraints ->
+                    val placeable = measurable.measure(constraints.copy(minHeight = 0, maxHeight = Constraints.Infinity))
+                    headerHeightPx = placeable.height
+                    val visibleHeight = (placeable.height + headerOffsetPx.roundToInt()).coerceAtLeast(0)
+                    layout(placeable.width, visibleHeight) {
+                        placeable.place(0, headerOffsetPx.roundToInt())
+                    }
+                },
+        ) {
+            FollowingUsersRow()
+            FollowModeChips(
+                titles = titles,
+                selectedIndex = pagerState.currentPage,
+                onSelect = { index ->
+                    viewModel.selectedTabIndex = index
+                    coroutineScope.launch {
+                        pagerState.animateScrollToPage(index)
+                    }
+                },
+            )
+        }
+
+        // 与知乎 App 一致：只能点上面的小按钮切换，不能左右滑；横滑交给外层主 pager 切换底栏页面
         HorizontalPager(
             state = pagerState,
+            userScrollEnabled = false,
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(
@@ -208,58 +244,26 @@ private fun FollowScreenContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FollowTabRow(
-    pagerState: PagerState? = null,
-    selectedTabIndex: Int,
-    onTabSelected: (Int) -> Unit,
-    modifier: Modifier = Modifier,
+private fun FollowModeChips(
+    titles: List<String>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit,
 ) {
-    val titles = listOf("推荐", "动态")
-    val tabs: @Composable () -> Unit = {
+    Row(
+        modifier = Modifier
+            .padding(horizontal = 12.dp, vertical = 4.dp)
+            .testTag(FOLLOW_SCREEN_TAB_ROW_TAG),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         titles.forEachIndexed { index, title ->
-            Tab(
+            FilterChip(
+                selected = selectedIndex == index,
+                onClick = { onSelect(index) },
+                label = { Text(title) },
                 modifier = Modifier.testTag("follow_screen_tab_$index"),
-                selected = selectedTabIndex == index,
-                onClick = { onTabSelected(index) },
-                text = {
-                    Text(
-                        text = title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                    )
-                },
             )
-        }
-    }
-
-    if (pagerState != null) {
-        BoxWithConstraints(modifier) {
-            val tabWidth = maxWidth / titles.size
-            PrimaryTabRow(
-                selectedTabIndex = selectedTabIndex,
-                modifier = Modifier.testTag(FOLLOW_SCREEN_TAB_ROW_TAG),
-                indicator = {
-                    val page = (pagerState.currentPage + pagerState.currentPageOffsetFraction)
-                        .coerceIn(0f, (titles.size - 1).toFloat())
-                    TabRowDefaults.PrimaryIndicator(
-                        modifier = Modifier
-                            .offset(x = tabWidth * page)
-                            .width(tabWidth),
-                    )
-                },
-            ) {
-                tabs()
-            }
-        }
-    } else {
-        PrimaryTabRow(
-            selectedTabIndex = selectedTabIndex,
-            modifier = modifier.testTag(FOLLOW_SCREEN_TAB_ROW_TAG),
-        ) {
-            tabs()
         }
     }
 }
@@ -405,7 +409,7 @@ fun FollowRecommendScreen(
                     .testTag(FOLLOW_RECOMMEND_LIST_TAG),
                 topContent = {
                     item {
-                        FollowingUsersRow()
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 },
                 onLoadMore = { viewModel.loadMore(environment) },

@@ -494,6 +494,7 @@ data class Person(
     val followersCount: Int = 0,
     val isFollowing: Boolean = false,
     val isFollowed: Boolean = false,
+    val isBlocking: Boolean = false,
     val badge: List<Badge>? = null,
     @SerialName("badgeV2")
     private val apiBadgeV2: DataHolder.BadgeV2? = null,

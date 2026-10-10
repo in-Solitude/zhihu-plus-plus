@@ -194,14 +194,14 @@ internal fun defaultBottomBarSelectionKeys(
     maximumSelection: Int? = 5,
 ): Set<String> = if (maximumSelection == null) {
     if (duo3HomeAccount) {
-        linkedSetOf(Home.name, Follow.name, HotList.name, Daily.name, OnlineHistory.name, MyCollections.name)
+        linkedSetOf(Home.name, Follow.name, HotList.name, OnlineHistory.name, MyCollections.name)
     } else {
-        linkedSetOf(Home.name, Follow.name, HotList.name, Daily.name, OnlineHistory.name, MyCollections.name, Account.name)
+        linkedSetOf(Home.name, Follow.name, HotList.name, OnlineHistory.name, MyCollections.name, Account.name)
     }
 } else if (duo3HomeAccount) {
-    linkedSetOf(Home.name, Follow.name, Daily.name)
+    linkedSetOf(Home.name, Follow.name)
 } else {
-    linkedSetOf(Home.name, Follow.name, Daily.name, OnlineHistory.name, Account.name)
+    linkedSetOf(Home.name, Follow.name, HotList.name, OnlineHistory.name, Account.name)
 }
 
 internal fun normalizeBottomBarSelection(

@@ -30,6 +30,7 @@ import com.github.zly2006.zhihu.data.target
 import com.github.zly2006.zhihu.util.raiseForStatus
 import com.github.zly2006.zhihu.viewmodel.PaginationEnvironment
 import com.github.zly2006.zhihu.viewmodel.deleteSigned
+import com.github.zly2006.zhihu.viewmodel.filter.ZhihuBlacklist
 import com.github.zly2006.zhihu.viewmodel.postSigned
 import io.ktor.http.encodeURLParameter
 import kotlinx.serialization.Serializable
@@ -192,6 +193,18 @@ open class SearchViewModel(
             error("服务端返回了 ${rawData.size} 条话题搜索结果，但均无法解码")
         }
         return feeds
+    }
+
+    override suspend fun applyZhihuBlacklist(
+        environment: PaginationEnvironment,
+        data: List<Feed>,
+    ): List<Feed> {
+        val authors = data
+            .mapNotNull { it.target?.author }
+            .mapNotNull { author -> author.urlToken?.takeIf(String::isNotBlank)?.let { author.id to it } }
+            .toMap()
+        val blacklistedIds = ZhihuBlacklist.blockedAuthorIds(environment, authors)
+        return data.filterNot { it.target?.author?.id in blacklistedIds }
     }
 
     override fun processResponse(

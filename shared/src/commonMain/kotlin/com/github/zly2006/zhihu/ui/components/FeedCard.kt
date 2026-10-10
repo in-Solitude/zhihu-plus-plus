@@ -79,6 +79,7 @@ import com.github.zly2006.zhihu.navigation.Account
 import com.github.zly2006.zhihu.navigation.LocalNavigator
 import com.github.zly2006.zhihu.navigation.NavDestination
 import com.github.zly2006.zhihu.navigation.Navigator
+import com.github.zly2006.zhihu.navigation.Person
 import com.github.zly2006.zhihu.navigation.withReadingQueueSource
 import com.github.zly2006.zhihu.platform.UserMessageDuration
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
@@ -306,6 +307,14 @@ private fun FeedCardContent(
     val fontSizePercent = remember { settings.getInt(PREF_FONT_SIZE, 100) }
     val lineHeightPercent = remember { settings.getInt(PREF_LINE_HEIGHT, 160) }
     val navigator = LocalNavigator.current
+    // 和官方客户端一致：点头像或名字进作者主页；匿名用户没有 urlToken，点击仍只吞掉事件、不打开内容
+    val feedAuthor = item.feed
+        ?.target
+        ?.author
+        ?.takeIf { !it.urlToken.isNullOrBlank() }
+    val openAuthor: () -> Unit = {
+        feedAuthor?.let { navigator.onNavigate(Person(id = it.id, urlToken = it.urlToken!!, name = it.name)) }
+    }
     val visiblePinImages = pinImages.takeIf { showFeedThumbnail && !item.isFiltered }.orEmpty()
     val sourceLabel = item.feed?.sourceLabel.takeUnless { item.isFiltered }
     if (duo3CardLayout) {
@@ -382,7 +391,7 @@ private fun FeedCardContent(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .weight(1f, fill = false)
-                                    .clickable {},
+                                    .clickable(onClick = openAuthor),
                             ) {
                                 AsyncImage(
                                     model = avatarSrc,
@@ -447,7 +456,7 @@ private fun FeedCardContent(
             Spacer(Modifier.height(4.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable {},
+                modifier = Modifier.clickable(onClick = openAuthor),
             ) {
                 AsyncImage(
                     model = avatarSrc,

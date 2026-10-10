@@ -66,6 +66,7 @@ import com.github.zly2006.zhihu.ui.components.SettingItem
 import com.github.zly2006.zhihu.ui.components.SettingItemGroup
 import com.github.zly2006.zhihu.ui.components.pageTurnViewportWithGuide
 import com.github.zly2006.zhihu.ui.components.rememberPageTurnTarget
+import com.github.zly2006.zhihu.viewmodel.HIDE_ZHIHU_BLACKLISTED_USERS_PREFERENCE_KEY
 import com.github.zly2006.zhihu.viewmodel.QUALITY_FILTER_MODE_PREFERENCE_KEY
 
 const val SETTINGS_SEARCH_INPUT_TAG = "settingsSearch.input"
@@ -226,6 +227,7 @@ private val settingsSearchEntries = buildList {
     add(recommendEntry("recommend.filterFollowedUserContent", "过滤已关注用户内容", "控制是否过滤已关注用户的内容。", "filterFollowedUserContent"))
     add(recommendEntry("recommend.enableKeywordBlocking", "启用关键词屏蔽", "按关键词过滤内容。", "enableKeywordBlocking", listOf("关键词", "屏蔽词")))
     add(recommendEntry("recommend.enableUserBlocking", "启用用户屏蔽", "按用户过滤内容。", "enableUserBlocking", listOf("作者屏蔽", "屏蔽用户")))
+    add(recommendEntry("recommend.hideZhihuBlacklistedUsers", "隐藏知乎黑名单用户", "在问题回答、评论和搜索结果中隐藏你在知乎里拉黑的用户。", HIDE_ZHIHU_BLACKLISTED_USERS_PREFERENCE_KEY, listOf("黑名单", "拉黑")))
     add(recommendEntry("recommend.enableTopicBlocking", "启用主题屏蔽", "按命中主题过滤内容。", "enableTopicBlocking", listOf("话题屏蔽", "屏蔽话题")))
     add(recommendEntry("recommend.topicBlockingThreshold", "主题屏蔽阈值", "设置命中多少个被屏蔽主题后才过滤内容。", "topicBlockingThreshold", listOf("主题阈值")))
     add(recommendEntry("recommend.blockZhihuAdPlatform", "屏蔽知乎广告平台内容", "过滤知乎广告平台推广内容。", "blockZhihuAdPlatform", listOf("广告")))

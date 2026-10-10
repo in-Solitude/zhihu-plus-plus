@@ -122,6 +122,7 @@ internal class NativePaginationEnvironment(
     override fun feedDisplaySettings(): FeedDisplaySettings = FeedDisplaySettings(
         qualityFilterMode = QualityFilterMode.OFF,
         reverseBlock = settingsStore.toFeedFilterSettings().reverseBlock,
+        hideZhihuBlacklistedUsers = settingsStore.getBoolean(HIDE_ZHIHU_BLACKLISTED_USERS_PREFERENCE_KEY, true),
     )
 
     override fun localHistory(): List<NavDestination> = historyStorage.history

@@ -80,6 +80,7 @@ import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.viewmodel.ANSWER_VOTEUP_THRESHOLD_PREFERENCE_KEY
 import com.github.zly2006.zhihu.viewmodel.ARTICLE_FOLLOWERS_THRESHOLD_PREFERENCE_KEY
 import com.github.zly2006.zhihu.viewmodel.ARTICLE_VOTEUP_THRESHOLD_PREFERENCE_KEY
+import com.github.zly2006.zhihu.viewmodel.HIDE_ZHIHU_BLACKLISTED_USERS_PREFERENCE_KEY
 import com.github.zly2006.zhihu.viewmodel.QUALITY_FILTER_MODE_PREFERENCE_KEY
 import com.github.zly2006.zhihu.viewmodel.QUESTION_ANSWER_THRESHOLD_PREFERENCE_KEY
 import com.github.zly2006.zhihu.viewmodel.QUESTION_FOLLOWERS_THRESHOLD_PREFERENCE_KEY
@@ -448,6 +449,19 @@ fun ContentFilterSettingsScreen(
                         settings.putBoolean("enableUserBlocking", it)
                     },
                     settingKey = "enableUserBlocking",
+                    highlightedKey = highlightedSetting,
+                )
+
+                val hideZhihuBlacklistedUsers = remember { mutableStateOf(settings.getBoolean(HIDE_ZHIHU_BLACKLISTED_USERS_PREFERENCE_KEY, true)) }
+                SettingItemWithSwitch(
+                    title = { Text("隐藏知乎黑名单用户") },
+                    description = { Text("在问题回答、评论和搜索结果中隐藏你在知乎里拉黑的用户") },
+                    checked = hideZhihuBlacklistedUsers.value,
+                    onCheckedChange = {
+                        hideZhihuBlacklistedUsers.value = it
+                        settings.putBoolean(HIDE_ZHIHU_BLACKLISTED_USERS_PREFERENCE_KEY, it)
+                    },
+                    settingKey = HIDE_ZHIHU_BLACKLISTED_USERS_PREFERENCE_KEY,
                     highlightedKey = highlightedSetting,
                 )
 

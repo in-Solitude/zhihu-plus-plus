@@ -38,11 +38,11 @@ class ZhihuMainPreferencesTest {
     @Test
     fun defaultBottomBarSelectionMatchesNavigationMode() {
         assertEquals(
-            linkedSetOf(Home.name, Follow.name, Daily.name),
+            linkedSetOf(Home.name, Follow.name),
             defaultBottomBarSelectionKeys(duo3HomeAccount = true),
         )
         assertEquals(
-            linkedSetOf(Home.name, Follow.name, Daily.name, OnlineHistory.name, Account.name),
+            linkedSetOf(Home.name, Follow.name, HotList.name, OnlineHistory.name, Account.name),
             defaultBottomBarSelectionKeys(duo3HomeAccount = false),
         )
     }
@@ -50,11 +50,11 @@ class ZhihuMainPreferencesTest {
     @Test
     fun desktopDefaultSelectionIncludesAllTopLevelDestinations() {
         assertEquals(
-            linkedSetOf(Home.name, Follow.name, HotList.name, Daily.name, OnlineHistory.name, MyCollections.name, Account.name),
+            linkedSetOf(Home.name, Follow.name, HotList.name, OnlineHistory.name, MyCollections.name, Account.name),
             defaultBottomBarSelectionKeys(duo3HomeAccount = false, maximumSelection = null),
         )
         assertEquals(
-            linkedSetOf(Home.name, Follow.name, HotList.name, Daily.name, OnlineHistory.name, MyCollections.name),
+            linkedSetOf(Home.name, Follow.name, HotList.name, OnlineHistory.name, MyCollections.name),
             defaultBottomBarSelectionKeys(duo3HomeAccount = true, maximumSelection = null),
         )
     }

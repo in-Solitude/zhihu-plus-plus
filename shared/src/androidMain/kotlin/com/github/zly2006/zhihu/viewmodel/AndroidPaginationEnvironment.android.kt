@@ -251,6 +251,7 @@ open class SharedAndroidPaginationEnvironment(
             questionFollowersCount = settingsStore.getInt(QUESTION_FOLLOWERS_THRESHOLD_PREFERENCE_KEY, 50).coerceAtLeast(0),
         ),
         reverseBlock = settingsStore.getBoolean("reverseBlock", false),
+        hideZhihuBlacklistedUsers = settingsStore.getBoolean(HIDE_ZHIHU_BLACKLISTED_USERS_PREFERENCE_KEY, true),
     )
 
     override fun localHistory(): List<NavDestination> = HistoryStorage(context).history

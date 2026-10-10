@@ -29,6 +29,7 @@ import com.github.zly2006.zhihu.viewmodel.PaginationEnvironment
 import com.github.zly2006.zhihu.viewmodel.PaginationViewModel
 import com.github.zly2006.zhihu.viewmodel.ZhihuApiEnvironment
 import com.github.zly2006.zhihu.viewmodel.deleteSigned
+import com.github.zly2006.zhihu.viewmodel.filter.ZhihuBlacklist
 import com.github.zly2006.zhihu.viewmodel.postSigned
 import io.ktor.http.isSuccess
 import kotlinx.coroutines.launch
@@ -84,6 +85,25 @@ abstract class BaseCommentViewModel(
                 val childCommentItem = createCommentItem(it, article)
                 commentsMap[it.id] = childCommentItem
             }
+        }
+    }
+
+    // 评论不直接删除：和信息流的质量屏蔽一样留一行“已屏蔽”占位，避免回复失去上下文，也方便确认误伤。
+    override suspend fun applyZhihuBlacklist(
+        environment: PaginationEnvironment,
+        data: List<DataHolder.Comment>,
+    ): List<DataHolder.Comment> {
+        val authors = data
+            .flatMap { listOf(it.author) + it.childComments.map(DataHolder.Comment::author) }
+            .filter { it.urlToken.isNotBlank() }
+            .associate { it.id to it.urlToken }
+        val blacklistedIds = ZhihuBlacklist.blockedAuthorIds(environment, authors)
+        if (blacklistedIds.isEmpty()) return data
+        return data.map { comment ->
+            comment.copy(
+                hiddenByZhihuBlacklist = comment.author.id in blacklistedIds,
+                childComments = comment.childComments.map { it.copy(hiddenByZhihuBlacklist = it.author.id in blacklistedIds) },
+            )
         }
     }
 
