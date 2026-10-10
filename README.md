@@ -1,6 +1,6 @@
 # Zhihu++（in-Solitude 维护版）
 
-这是 [zly2006/zhihu-plus-plus](https://github.com/zly2006/zhihu-plus-plus) 的个人维护分支。原作者已宣布停更，本分支按自己的使用习惯继续改，目标是交互尽量贴近知乎官方 App。
+这是 [zly2006/zhihu-plus-plus](https://github.com/zly2006/zhihu-plus-plus) 的个人维护分支。原作者已宣布（暂时）停更@https://www.zhihu.com/pin/2086160382381515136，本分支按自己的使用习惯继续改，目标是交互尽量贴近知乎官方 App。
 
 - **基于版本**：上游 `master` 的 [`eb9d9a7a`](https://github.com/zly2006/zhihu-plus-plus/commit/eb9d9a7a)（2026-10-11，发布版 `0.30.1` 之后 4 个提交）
 - **许可证**：沿用上游的 AGPL-3.0（仅第 3 版），源文件中的原作者版权声明均保留
