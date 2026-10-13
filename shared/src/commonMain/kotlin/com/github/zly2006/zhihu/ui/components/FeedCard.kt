@@ -308,12 +308,14 @@ private fun FeedCardContent(
     val lineHeightPercent = remember { settings.getInt(PREF_LINE_HEIGHT, 160) }
     val navigator = LocalNavigator.current
     // 和官方客户端一致：点头像或名字进作者主页；匿名用户没有 urlToken，点击仍只吞掉事件、不打开内容
-    val feedAuthor = item.feed
-        ?.target
-        ?.author
-        ?.takeIf { !it.urlToken.isNullOrBlank() }
+    val authorDestination = item.authorDestination
+        ?: item.feed
+            ?.target
+            ?.author
+            ?.takeIf { !it.urlToken.isNullOrBlank() }
+            ?.let { Person(id = it.id, urlToken = it.urlToken!!, name = it.name) }
     val openAuthor: () -> Unit = {
-        feedAuthor?.let { navigator.onNavigate(Person(id = it.id, urlToken = it.urlToken!!, name = it.name)) }
+        authorDestination?.let(navigator.onNavigate)
     }
     val visiblePinImages = pinImages.takeIf { showFeedThumbnail && !item.isFiltered }.orEmpty()
     val sourceLabel = item.feed?.sourceLabel.takeUnless { item.isFiltered }

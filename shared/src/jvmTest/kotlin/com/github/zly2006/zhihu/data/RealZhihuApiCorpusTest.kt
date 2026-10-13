@@ -60,6 +60,11 @@ class RealZhihuApiCorpusTest {
 
         val mobile = assertNotNull(parseMobileHomeFeedDisplayItem(fixtureJson("mobile-home-card.json").jsonObject))
         assertNotNull(mobile.navDestination)
+        // 安卓端推荐的回答卡片没有 feed，点头像要靠这里的作者主页才能跳转
+        val mobileAuthor = assertNotNull(mobile.authorDestination)
+        assertEquals("redacted-person-001", mobileAuthor.id)
+        assertEquals("redacted-person-token-001", mobileAuthor.urlToken)
+        assertEquals("脱敏用户001", mobileAuthor.name)
 
         val moments = fixtureJson("moments-feed-items.json").jsonArray.map { ZhihuJson.decodeJson<Feed>(it) }
         val voteupAnswer = assertIs<CommonFeed>(moments[0])

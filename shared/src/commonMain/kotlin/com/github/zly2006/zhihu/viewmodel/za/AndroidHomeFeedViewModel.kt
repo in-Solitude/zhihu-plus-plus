@@ -169,12 +169,12 @@ fun parseMobileHomeFeedDisplayItem(card: JsonObject): FeedDisplayItem? {
     val routeUrl = route.decodeURLPart()
     val routeDest = resolveContent(routeUrl) ?: return null
     val children = card["children"]?.jsonArray?.map { it.jsonObject } ?: return null
-    val extra = if (routeDest is Pin) {
-        card["extra"]?.let { ZhihuJson.decodeJson<MobileHomeCardExtra>(it) }
-    } else {
-        null
-    }
+    val extra = card["extra"]?.let { ZhihuJson.decodeJson<MobileHomeCardExtra>(it) }
+    // 真实回答卡片（见 jvmTest 的 mobile-home-card.json）把作者放在 business_ext_map.passthrough_info 下；
+    // 想法卡片沿用原先从 extra.passthrough_info 读取的位置
+    val author = extra?.businessExtMap?.passthroughInfo?.author ?: extra?.passthroughInfo?.author
     val originalContent = extra
+        ?.takeIf { routeDest is Pin }
         ?.businessExtMap
         ?.oriContent
         ?.takeIf { it.isNotBlank() }
@@ -233,7 +233,6 @@ fun parseMobileHomeFeedDisplayItem(card: JsonObject): FeedDisplayItem? {
         routeDest.avatarSrc = avatar
     }
     val feed = if (routeDest is Pin) {
-        val author = extra?.passthroughInfo?.author
         CommonFeed(
             id = card["id"]?.jsonPrimitive?.content.orEmpty(),
             target = Feed.PinTarget(
@@ -288,6 +287,10 @@ fun parseMobileHomeFeedDisplayItem(card: JsonObject): FeedDisplayItem? {
         title = title,
         details = "$footerText · 手机版推荐",
         feed = feed,
+        authorDestination = author
+            ?.urlToken
+            ?.takeIf { it.isNotBlank() }
+            ?.let { com.github.zly2006.zhihu.navigation.Person(id = author.id, urlToken = it, name = authorName) },
     )
 }
 
@@ -301,6 +304,7 @@ private data class MobileHomeCardExtra(
 private data class MobileHomeBusinessExtMap(
     val oriContent: String = "",
     val images: List<MobileHomeImage> = emptyList(),
+    val passthroughInfo: MobileHomePassthroughInfo? = null,
 )
 
 @Serializable
