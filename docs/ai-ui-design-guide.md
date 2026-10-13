@@ -161,7 +161,7 @@ URL 解析集中在 `resolveContent()`。支持知乎问题、回答、文章、
 
 ## 验证入口
 
-UI 代码改动按 `CLAUDE.md` 的 AVD 和 UI 双代理流程执行。文档或纯注释改动不需要启动 AVD，但仍应做 Markdown 自查、关键路径 `rg` 复核和 `git diff --check`。
+UI 代码改动按 `CLAUDE.md` 的“验证”一节执行。文档或纯注释改动不需要设备验证，但仍应做 Markdown 自查、关键路径 `rg` 复核和 `git diff --check`。
 
 常用定位命令:
 
