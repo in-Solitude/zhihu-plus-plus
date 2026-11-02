@@ -20,6 +20,7 @@ package com.github.zly2006.zhihu
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsDisplayed
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithTag
 import androidx.compose.ui.test.onNodeWithTag
@@ -51,6 +52,7 @@ import com.github.zly2006.zhihu.test.setScreenContent
 import com.github.zly2006.zhihu.ui.PEOPLE_SCREEN_ANSWERS_LIST_TAG
 import com.github.zly2006.zhihu.ui.PEOPLE_SCREEN_AVATAR_TAG
 import com.github.zly2006.zhihu.ui.PEOPLE_SCREEN_BLOCK_BUTTON_TAG
+import com.github.zly2006.zhihu.ui.PEOPLE_SCREEN_FOLLOWING_COUNT_TAG
 import com.github.zly2006.zhihu.ui.PEOPLE_SCREEN_FOLLOW_BUTTON_TAG
 import com.github.zly2006.zhihu.ui.PEOPLE_SCREEN_HEADER_TAG
 import com.github.zly2006.zhihu.ui.PEOPLE_SCREEN_QUESTION_AUTHOR_BLOCK_BUTTON_TAG
@@ -239,6 +241,37 @@ class PeopleScreenInstrumentedTest {
                 "收起态操作按钮不能覆盖标签栏: $tag",
                 buttonBounds.bottom <= collapsedTabBounds.top || buttonBounds.top >= collapsedTabBounds.bottom,
             )
+        }
+    }
+
+    /**
+     * 回归：标签栏右端渐变遮罩的位置写死在 240dp，头部改成按内容实测高度后，展开态下这块看不见的遮罩
+     * 会落进头部并吞掉点击。头部高度随认证称号数量变化，遮罩有时正好盖住最右边的“关注”统计数。
+     */
+    @Test
+    fun followingStatIsTappableAtEveryExpandedHeaderHeightOffline() {
+        val viewModel = seededViewModel(itemCount = 1)
+        setPeopleScreen()
+        val badges = listOf(
+            OfficialBadge("社区成就", "社区成就说明"),
+            OfficialBadge("身份认证", "身份认证说明"),
+            OfficialBadge("优秀答主", "优秀答主说明"),
+            OfficialBadge("新知答主", "新知答主说明"),
+        )
+
+        for (badgeCount in 0..badges.size) {
+            composeRule.activity.runOnUiThread {
+                viewModel.officialBadgeDetails = badges.take(badgeCount)
+            }
+            composeRule.onNodeWithTag("people_screen_tab_0").performClick()
+            composeRule.waitForIdle()
+
+            composeRule.onNodeWithTag(PEOPLE_SCREEN_FOLLOWING_COUNT_TAG).performClick()
+            composeRule.waitForIdle()
+
+            composeRule
+                .onNodeWithTag("people_screen_tab_8")
+                .assertIsSelected()
         }
     }
 

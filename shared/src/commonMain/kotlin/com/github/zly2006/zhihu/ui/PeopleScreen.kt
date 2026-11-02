@@ -81,6 +81,7 @@ import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.lerp
 import androidx.lifecycle.ViewModel
@@ -822,10 +823,12 @@ fun PeopleScreen(
                         }
                     }
                 }
+                // 标签栏右端的渐变遮罩。位置跟随实测头部高度（头部高度不固定，写死的偏移会落进头部，
+                // 挡住“关注”统计数）；完全展开时遮罩不可见，也不拦截触摸
                 Box(
                     modifier = Modifier
                         .align(Alignment.TopEnd)
-                        .offset(y = lerp(240.dp, 0.dp, collapsedFraction))
+                        .offset { IntOffset(0, (expandedHeaderHeightPx * (1f - collapsedFraction)).roundToInt()) }
                         .padding(end = 0.dp)
                         .size(width = 96.dp, height = 56.dp)
                         .alpha(collapsedFraction)
@@ -833,16 +836,22 @@ fun PeopleScreen(
                             Brush.horizontalGradient(
                                 colors = listOf(Color.Transparent, MaterialTheme.colorScheme.surface),
                             ),
-                        ).pointerInput(Unit) {
-                            awaitPointerEventScope {
-                                while (true) {
-                                    awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
-                                    while (awaitPointerEvent(PointerEventPass.Initial).changes.any { it.pressed }) {
-                                        awaitPointerEvent(PointerEventPass.Initial).changes.forEach { it.consume() }
+                        ).then(
+                            if (collapsedFraction > 0f) {
+                                Modifier.pointerInput(Unit) {
+                                    awaitPointerEventScope {
+                                        while (true) {
+                                            awaitFirstDown(requireUnconsumed = false, pass = PointerEventPass.Initial)
+                                            while (awaitPointerEvent(PointerEventPass.Initial).changes.any { it.pressed }) {
+                                                awaitPointerEvent(PointerEventPass.Initial).changes.forEach { it.consume() }
+                                            }
+                                        }
                                     }
                                 }
-                            }
-                        },
+                            } else {
+                                Modifier
+                            },
+                        ),
                 )
                 // 展开时位于头像上方的留白里；收起后落在标签栏左侧的默认 52dp 起始留白内，两种状态都可点
                 IconButton(
