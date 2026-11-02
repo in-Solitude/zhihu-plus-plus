@@ -234,7 +234,7 @@ fun ContentFilterSettingsScreen(
                 SettingItemWithSwitch(
                     modifier = Modifier.testTag("contentFilterSettings:autoRefreshHomeOnStartup"),
                     title = { Text("启动时自动刷新首页") },
-                    description = { Text("关闭后优先显示上次获取的一批首页推荐；没有缓存时仍会加载新推荐") },
+                    description = { Text("开启时先显示上次的推荐，同时在后台加载新推荐并放到顶部；关闭后只显示上次获取的一批推荐，没有缓存时仍会加载新推荐") },
                     checked = autoRefreshHomeOnStartup.value,
                     onCheckedChange = { checked ->
                         autoRefreshHomeOnStartup.value = checked

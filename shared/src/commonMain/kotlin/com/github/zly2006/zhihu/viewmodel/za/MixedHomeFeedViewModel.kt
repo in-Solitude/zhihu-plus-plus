@@ -41,6 +41,8 @@ class MixedHomeFeedViewModel :
         web.displayItems = this.displayItems
         android.latestLoadedDisplayItems = this.latestLoadedDisplayItems
         web.latestLoadedDisplayItems = this.latestLoadedDisplayItems
+        android.startupCacheKeys = this.startupCacheKeys
+        web.startupCacheKeys = this.startupCacheKeys
     }
 
     override suspend fun fetchFeeds(environment: PaginationEnvironment) {

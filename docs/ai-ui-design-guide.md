@@ -105,6 +105,7 @@ URL 解析集中在 `resolveContent()`。支持知乎问题、回答、文章、
 | --- | --- | --- | --- |
 | `recommendationMode` | 推荐算法 | Web、Android、本地、混合推荐 | 枚举在 `RecommendationMode.kt` |
 | `loginForRecommendation` | 推荐内容时登录 | 获取推荐时是否带登录凭证 | 影响服务端推荐结果 |
+| `autoRefreshHomeOnStartup` | 启动时自动刷新首页 | 开启：先显示启动缓存，同时后台拉新推荐并插到缓存之上，首页顶部出现“有新推荐”提示；关闭：只显示缓存 | 默认开启；插入位置由 `BaseFeedViewModel.startupCacheKeys` 决定，滚动锚定在 `HomeScreen` |
 | `qualityFilterMode` | 质量屏蔽 | 不屏蔽、显示屏蔽规则或隐藏低质量内容 | 默认 `RULES`，旧布尔设置不迁移 |
 | `enableContentFilter` | 智能内容过滤 | 过滤重复出现但未点击内容 | 关闭时相关子统计/开关应弱化 |
 | `filterFollowedUserContent` | 过滤已关注用户内容 | 是否过滤关注用户内容 | 仅智能过滤开启时可操作 |

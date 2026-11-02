@@ -17,6 +17,11 @@
 
 package com.github.zly2006.zhihu.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -38,6 +43,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.ArrowCircleUp
+import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Flag
@@ -47,9 +53,11 @@ import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
@@ -62,10 +70,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -155,6 +165,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -177,6 +188,7 @@ const val HOME_CREATE_FAB_TAG = "home_create_fab"
 const val HOME_NOTIFICATION_BUTTON_TAG = "home_notification_button"
 const val HOME_NOTIFICATION_BUTTON_CONTENT_TAG = "home_notification_button_content"
 const val HOME_NOTIFICATION_BADGE_TAG = "home_notification_badge"
+const val HOME_NEW_FEEDS_HINT_TAG = "home_new_feeds_hint"
 const val HOME_ACCOUNT_BUTTON_TAG = "home_account_button"
 const val HOME_FEED_LIST_TAG = "home_feed_list"
 const val HOME_REFRESH_BUTTON_TAG = "home_refresh_button"
@@ -284,6 +296,7 @@ fun HomeScreen(
     var authorPinAnnouncements by homeState.authorPinAnnouncements
 
     val listState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
     var cachedScrollToTopTrigger by remember { mutableIntStateOf(scrollToTopTrigger) }
     LaunchedEffect(scrollToTopTrigger) {
         when (
@@ -330,6 +343,48 @@ fun HomeScreen(
         }
     }
 
+    // 启动后先显示缓存，后台拉到的新推荐插在缓存之上（见 BaseFeedViewModel.startupCacheKeys）。
+    // 用户已经在看推荐时，Compose 以带 key 的卡片为锚点，新推荐自然留在视野上方；但停在列表顶部时，
+    // 锚点是 topContent 里没有 key 的更新公告位，新推荐会被直接顶进视野，所以这里改为锚定原先第一条缓存。
+    var hasNewFeedsAbove by remember(viewModel) { mutableStateOf(false) }
+    val firstFeedVisible by remember(viewModel, listState) {
+        derivedStateOf {
+            val firstKey = viewModel.displayItems.firstOrNull()?.stableKey
+            listState.layoutInfo.visibleItemsInfo.any { it.key == firstKey }
+        }
+    }
+    LaunchedEffect(firstFeedVisible) {
+        if (firstFeedVisible) hasNewFeedsAbove = false
+    }
+    LaunchedEffect(viewModel, listState) {
+        var shownCacheKeys = emptySet<String>()
+        var newItemCount = 0
+        snapshotFlow {
+            val keys = viewModel.startupCacheKeys.value
+            keys to viewModel.displayItems.indexOfFirst { it.stableKey in keys }
+        }.collect { (keys, firstCachedIndex) ->
+            if (keys !== shownCacheKeys || firstCachedIndex < 0) {
+                // 缓存刚显示（或已结束）：此刻已在缓存之上的条目不算新插入
+                shownCacheKeys = keys
+                newItemCount = firstCachedIndex.coerceAtLeast(0)
+                return@collect
+            }
+            // 后台过滤删掉缓存之上的条目时计数会下降，只在增加时处理新插入
+            val inserted = firstCachedIndex > newItemCount
+            newItemCount = firstCachedIndex
+            if (!inserted) return@collect
+            // 必须与下方 topContent 的条目数一致：更新公告位 + 在线通知 + 作者置顶公告
+            val feedStartIndex = 1 + onlineNotifications.size + authorPinAnnouncements.size
+            val headerShowing = listState.layoutInfo.visibleItemsInfo.any { it.index < feedStartIndex && it.size > 0 }
+            if (listState.firstVisibleItemIndex < feedStartIndex) {
+                // 顶部正显示公告时不跳走，新推荐直接出现在公告下方，也就不需要提示
+                if (headerShowing) return@collect
+                listState.requestScrollToItem(feedStartIndex + firstCachedIndex)
+            }
+            hasNewFeedsAbove = true
+        }
+    }
+
     val completedPageCount = viewModel.completedPageCount
     LaunchedEffect(completedPageCount) {
         if (completedPageCount > 0 &&
@@ -355,31 +410,31 @@ fun HomeScreen(
             if (!account.login && settings.getBoolean("loginForRecommendation", true)) {
                 requestLoginNavigation()
             } else if (viewModel.displayItems.isEmpty()) {
-                val cachedItems = if (autoRefreshOnStartup) {
+                // 先发出新推荐请求，读缓存和等待已读过滤与它并行
+                if (autoRefreshOnStartup) {
+                    viewModel.refresh(paginationEnvironment)
+                }
+                val cachedItems = withContext(Dispatchers.Default) {
+                    runCatching {
+                        if (SystemFileSystem.exists(startupCacheFile)) {
+                            SystemFileSystem.source(startupCacheFile).buffered().use { source ->
+                                decodeHomeFeedStartupSnapshot(source.readString())
+                            }
+                        } else {
+                            emptyList()
+                        }
+                    }.getOrDefault(emptyList())
+                }
+                val unreadCachedItems = if (cachedItems.isEmpty()) {
                     emptyList()
                 } else {
-                    withContext(Dispatchers.Default) {
-                        runCatching {
-                            if (SystemFileSystem.exists(startupCacheFile)) {
-                                SystemFileSystem.source(startupCacheFile).buffered().use { source ->
-                                    decodeHomeFeedStartupSnapshot(source.readString())
-                                }
-                            } else {
-                                emptyList()
-                            }
-                        }.getOrDefault(emptyList())
-                    }
-                }
-                if (cachedItems.isNotEmpty()) {
                     remoteHistory.awaitRecentPage()
-                    val unreadCachedItems = remoteHistory.filterRemoteReads(cachedItems)
-                    if (unreadCachedItems.isEmpty()) {
-                        viewModel.refresh(paginationEnvironment)
-                    } else {
-                        viewModel.addDisplayItems(unreadCachedItems)
-                    }
-                } else {
-                    viewModel.refresh(paginationEnvironment)
+                    remoteHistory.filterRemoteReads(cachedItems)
+                }
+                when {
+                    autoRefreshOnStartup -> viewModel.showStartupCache(unreadCachedItems)
+                    unreadCachedItems.isEmpty() -> viewModel.refresh(paginationEnvironment)
+                    else -> viewModel.addDisplayItems(unreadCachedItems)
                 }
             }
         }
@@ -911,6 +966,28 @@ fun HomeScreen(
                         if (destination != null) {
                             navigator.onNavigate(destination)
                         }
+                    }
+                }
+
+                AnimatedVisibility(
+                    visible = hasNewFeedsAbove && !firstFeedVisible,
+                    enter = fadeIn() + slideInVertically { -it },
+                    exit = fadeOut() + slideOutVertically { -it },
+                    modifier = Modifier
+                        .align(Alignment.TopCenter)
+                        .padding(top = scaffoldPadding.calculateTopPadding() + 8.dp),
+                ) {
+                    FilledTonalButton(
+                        onClick = {
+                            hasNewFeedsAbove = false
+                            coroutineScope.launch { listState.animateScrollToItem(0) }
+                        },
+                        elevation = ButtonDefaults.filledTonalButtonElevation(defaultElevation = 3.dp),
+                        modifier = Modifier.testTag(HOME_NEW_FEEDS_HINT_TAG),
+                    ) {
+                        Icon(Icons.Default.ArrowUpward, contentDescription = null, modifier = Modifier.size(18.dp))
+                        Spacer(Modifier.width(4.dp))
+                        Text("有新推荐")
                     }
                 }
 

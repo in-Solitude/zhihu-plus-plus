@@ -48,6 +48,12 @@ abstract class BaseFeedViewModel : PaginationViewModel<Feed>(typeOf<Feed>()) {
     var displayItems = mutableStateListOf<FeedDisplayItem>()
     internal var latestLoadedDisplayItems = mutableStateOf<List<FeedDisplayItem>>(emptyList())
     internal var completedPageCount by mutableIntStateOf(0)
+
+    /**
+     * 启动时先显示的上次缓存条目。非空期间，后台拉到的新推荐插在这些缓存条目之前，由首页提示“有新推荐”；
+     * 之后的分页或刷新会清空它，新条目恢复为追加到末尾。
+     */
+    internal var startupCacheKeys = mutableStateOf<Set<String>>(emptySet())
     var isPullToRefresh by mutableStateOf(false)
         protected set
 
@@ -79,9 +85,21 @@ abstract class BaseFeedViewModel : PaginationViewModel<Feed>(typeOf<Feed>()) {
         super.refresh(environment)
     }
 
+    override fun loadMore(environment: PaginationEnvironment) {
+        if (!isLoading) startupCacheKeys.value = emptySet()
+        super.loadMore(environment)
+    }
+
+    /** 启动刷新进行中先显示上次缓存的推荐：缓存追加在当前列表末尾，之后拉到的新推荐插在缓存之前。 */
+    fun showStartupCache(cachedItems: List<FeedDisplayItem>) {
+        addDisplayItems(cachedItems)
+        startupCacheKeys.value = cachedItems.mapTo(hashSetOf()) { it.stableKey }
+    }
+
     suspend fun pullToRefresh(environment: PaginationEnvironment) {
         isPullToRefresh = true
         displayItems.clear()
+        startupCacheKeys.value = emptySet()
         if (isLoading) return
         errorMessage = null
         debugData.clear()
@@ -107,9 +125,11 @@ abstract class BaseFeedViewModel : PaginationViewModel<Feed>(typeOf<Feed>()) {
     }
 
     fun addDisplayItems(newItems: List<FeedDisplayItem>) {
+        val cacheKeys = startupCacheKeys.value
+        var insertAt = displayItems.indexOfFirst { it.stableKey in cacheKeys }.takeIf { it >= 0 } ?: displayItems.size
         newItems.forEach {
             if (displayItems.none { existing -> existing.stableKey == it.stableKey }) {
-                displayItems.add(it)
+                displayItems.add(insertAt++, it)
             }
         }
     }
