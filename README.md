@@ -1,16 +1,25 @@
-# Zhihu++（in-Solitude 维护版）
+# 独知 DuZhi
 
-这是 [zly2006/zhihu-plus-plus](https://github.com/zly2006/zhihu-plus-plus) 的个人维护分支。原作者已宣布（暂时）停更@https://www.zhihu.com/pin/2086160382381515136 ，本分支按自己的使用习惯继续改，目标是交互尽量贴近知乎官方 App。
+隐私增强、无广告的知乎第三方客户端。Android 为主，并提供实验性桌面版：去广告、去推广软文、去带货、去盐选专栏，支持本地推荐算法、关键词 / 用户 / 话题屏蔽，交互尽量贴近知乎官方 App。
 
-- **基于版本**：上游 `master` 的 [`eb9d9a7a`](https://github.com/zly2006/zhihu-plus-plus/commit/eb9d9a7a)（2026-10-11，发布版 `0.30.1` 之后 4 个提交）
-- **许可证**：沿用上游的 AGPL-3.0（仅第 3 版），源文件中的原作者版权声明均保留
-- **开发方式**：需求和验收由 in-Solitude 负责，代码由 [Claude Code](https://claude.com/claude-code) 编写
+- **来源与许可**：派生自 [Zhihu++](https://github.com/zly2006/zhihu-plus-plus)（作者 zly2006），基于其 `master` 的 `eb9d9a7a`（2026-10-11）由 in-Solitude 修改并独立维护。整个项目沿用 AGPL-3.0（仅第 3 版），源文件中的原作者版权声明均保留。
+- **开发方式**：需求和验收由 in-Solitude 负责，代码由 [Claude Code](https://claude.com/claude-code) 编写。
+- **与知乎的关系**：本应用不由知乎官方开发或运营，也不受知乎官方承认或支持。
 
-## 相对上游的改动
+## 下载
+
+[在 Releases 页面下载](https://github.com/in-Solitude/zhihu-plus-plus/releases)
+
+- **Lite**：体积小，不含端侧 NLP。
+- **Full**：内置 ONNX 运行时，支持基于向量相似度的智能屏蔽词。
+
+包名是 `io.github.insolitude.duzhi`（Lite 版加 `.lite`），可以和 Zhihu++ 同时安装；数据不会从 Zhihu++ 迁移过来，需要重新登录。
+
+## 相对 Zhihu++ 的改动
 
 ### 新功能：隐藏知乎黑名单用户
 
-你在知乎账号里拉黑的人，在 Zhihu++ 里也看不到。设置 → 内容过滤 → “隐藏知乎黑名单用户”，默认开启。
+你在知乎账号里拉黑的人，在独知里也看不到。设置 → 内容过滤 → “隐藏知乎黑名单用户”，默认开启。
 
 | 位置 | 效果 |
 | --- | --- |
@@ -50,58 +59,16 @@
 - **评论**：发送或点赞失败会弹出提示，输入的内容保留（上游发送按钮会一直转圈、没有提示）；评论加载失败也能重试
 - **屏蔽作者**：在首页、关注、搜索的卡片菜单里屏蔽后，已加载的条目原地折叠，不再整页刷新丢掉位置
 
----
+### 和原项目断开联系
 
-以下为上游原 README。
+- **不再连接原作者的服务器**：删除了匿名使用统计（遥测）、首页在线通知、崩溃上报，以及依赖原作者服务器的“标记疑似 AIGC”（含阅读进度上报和积分）。原项目的 AIGC 投票服务端代码 `aigc-vote-server` 也一并删除
+- **不再展示原作者的内容**：删除了首页的原作者想法 / 投票公告卡片，原作者账号的“知乎++ 作者”徽章，以及在原作者回答和想法下评论时弹出的“评论区使用须知”
+- **检查更新**：改为检查本仓库的 GitHub Releases，不再使用原作者的镜像；“国内网盘加速下载”入口随之去掉
+- **链接**：项目地址、开源协议、问题反馈、导出文件页脚都指向本仓库；去掉原作者的 Discord / Telegram 群组
+- **名称与身份**：应用改名“独知”，包名改为 `io.github.insolitude.duzhi`；桌面版和 macOS 版的名称、安装包标识也已更换
+- **登录前确认**：去掉了“同意遥测”那一步
 
-# Zhihu++：注重隐私、互联网个人权利和无广告的知乎客户端
-
-[![GitHub release](https://img.shields.io/github/v/release/zly2006/zhihu-plus-plus)](https://github.com/zly2006/zhihu-plus-plus/releases)
-
-本项目还不够完善，欢迎PR。
-
-Zhihu++独创本地推荐算法，把内容推荐完全放在本地进行，为您提供和筛选高质量内容。
-本地推荐算法完全独立于知乎算法，依赖爬虫运行，可以自由定制各种推荐权重，保证看到自己想看的内容。
-我相信，这点绵薄之力可以帮助广大用户从大公司的手中夺回本该属于我们的权利——选择自己的生活，不被算法奴役的权利。
-
-知乎客户端，Android 为主，并提供实验性桌面版。去广告，去推广软文，去推销带货，去盐选专栏。
-
-支持手机端/网页端/混合等多种推荐方案。
-
-可以设置屏蔽词、AI屏蔽回答、屏蔽用户、屏蔽话题，也支持搜索筛选、沉浸式阅读、AIGC 标记和内容创作。
-
-## 应用截图
-
-| 首页 | 关注 | 日报 | 个人主页 | 文章 |
-| --- | --- | --- | --- | --- |
-| ![首页截图](fastlane/metadata/android/zh-CN/images/phoneScreenshots/1_home.jpg) | ![关注截图](fastlane/metadata/android/zh-CN/images/phoneScreenshots/2_follow.jpg) | ![日报截图](fastlane/metadata/android/zh-CN/images/phoneScreenshots/3_daily.jpg) | ![个人主页截图](fastlane/metadata/android/zh-CN/images/phoneScreenshots/4_people.jpg) | ![文章截图](fastlane/metadata/android/zh-CN/images/phoneScreenshots/5_article.jpg) |
-
-<div style="  display: flex; flex-flow: column; max-width: 520px; margin: auto; align-items: center" align="center">
-  <img height="320" alt="知乎++在老年机上都能流畅运行" src="https://github.com/user-attachments/assets/e85e899c-d899-4309-8382-2a2aee25a1f9" />
-  <div>
-    知乎++在老年机上都能流畅运行 photo by @zeky
-  </div>
-</div>
-
-
-## 下载
-
-告别知乎 110MB+ 的 Android 客户端，Lite APK 只要不到 4 MB！
-
-[点我下载](https://github.com/zly2006/zhihu-plus-plus/releases)
-
-[下载最新开发版本](https://github.com/zly2006/zhihu-plus-plus/releases/tag/nightly)
-
-桌面版提供 Windows MSI 安装包与 Linux AppImage（均内置 Java 运行时，下载安装即可使用，无需另外安装 Java），macOS 提供 arm64 原生应用。
-
-> 关于Full和Lite两个版本的说明：
-> Full版本包含了一个onnx框架，可以在端侧进行离线AI推理，支持基于LLM embedding的智能内容过滤功能，
-> 这实际上主要是本人对端侧AI的技术尝试，实际功能还有很多没开发的，比如人本地知识库（懒）；
-> Lite版本不支持智能内容过滤，但体积更小，性能更好。您可以根据自己的需求选择下载哪个版本。
-
-## 路线图
-
-### 已经实现的功能
+## 功能
 
 - 登录与账号
   - 支持手机验证码登录
@@ -140,11 +107,10 @@ Zhihu++独创本地推荐算法，把内容推荐完全放在本地进行，为�
   - Android 端支持写回答、编辑已有回答、保存草稿和发布回答
   - 写回答支持 Markdown 编辑、预览和插入图片
 - 社区互动
-  - 支持查看个人主页（含关注订阅板块）、关注/拉黑用户、屏蔽推荐
+  - 支持查看个人主页（含关注订阅板块）、关注/拉黑用户、本地屏蔽
   - 支持查看回答赞同者列表，以及关注的人赞同
   - 评论区（含子评论、回复、点赞、按时间排序）
   - 通知（支持分类、红点设置、全部标记已读、自动标记已读与通知筛选）
-  - 可记名标记疑似 AIGC 内容，并查看有效标记和投票人
   - 表情包
     - 经典表情`[惊喜]` <img src="misc/emojis/emoji_1114211280118018048.png" height="18" style="diSplay:inline"> 强势回归！
 - 屏蔽系统
@@ -167,30 +133,8 @@ Zhihu++独创本地推荐算法，把内容推荐完全放在本地进行，为�
   - 双击操作快速 **点赞** 或 **打开评论区**
   - 点击底部导航栏回到顶部/刷新
 
-### 遥测
+## 应用截图
 
-若您同意（可以在设置关闭），本应用会收集一些匿名的数据，用来统计使用量。您可以随时拒绝遥测，这不影响任何功能的使用。我们收集的数据如下：
-
-- 应用启动次数
-- 应用启动时间
-- 您的IP地址
-- 经过SHA256匿名化后的知乎账号ID（如果您登录了的话）
-
-除此之外，我们不会收集任何其他数据，包括但不限于您的浏览记录、推荐算法的输入输出、屏蔽词列表等。
-
-### See Also
-
-如果对其他知乎客户端感兴趣，这些客户端都不需要你root即可使用，也欢迎尝试：
-
-- [Hydrogen](https://github.com/zhihulite/Hydrogen)
-- [Zhihu--](https://github.com/huamurui/zhihu-minus-minus) （极早期开发阶段，功能尚有欠缺）
-- [Zhihu++ swift版（iOS）](https://github.com/kangyun1994/zhihu-plus-plus-swift)
-- [Zhihu++ HMOS （鸿蒙版）](https://github.com/zhuoyi233/zhihu-plus-plus-HMOS)
-
-注意：这里的所有项目与知乎++无关，在此列出不代表其实得到了知乎++的支持或背书。
-
-## 贡献者
-
-感谢所有为 Zhihu++ 做出贡献的开发者与用户，正是你们让这个项目持续变得更好。
-
-[![Contributors](https://ghcontrib.pages.dev/image?repo=zly2006/zhihu-plus-plus)](https://github.com/zly2006/zhihu-plus-plus/graphs/contributors)
+| 首页 | 关注 | 日报 | 个人主页 | 文章 |
+| --- | --- | --- | --- | --- |
+| ![首页截图](fastlane/metadata/android/zh-CN/images/phoneScreenshots/1_home.jpg) | ![关注截图](fastlane/metadata/android/zh-CN/images/phoneScreenshots/2_follow.jpg) | ![日报截图](fastlane/metadata/android/zh-CN/images/phoneScreenshots/3_daily.jpg) | ![个人主页截图](fastlane/metadata/android/zh-CN/images/phoneScreenshots/4_people.jpg) | ![文章截图](fastlane/metadata/android/zh-CN/images/phoneScreenshots/5_article.jpg) |

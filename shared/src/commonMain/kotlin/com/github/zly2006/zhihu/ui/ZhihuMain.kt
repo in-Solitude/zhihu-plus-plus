@@ -187,7 +187,7 @@ internal val LocalReadingPlayerOverlayPadding = staticCompositionLocalOf { 0.dp 
 internal val LocalArticleNavController = staticCompositionLocalOf<NavHostController?> { null }
 
 /**
- * Zhihu++ 的共享应用主壳。
+ * 独知的共享应用主壳。
  *
  * 这个 composable 是顶层体验的唯一所有者：渲染可配置底部导航栏，承载横向主 tab pager，向子页面提供 [LocalNavigator]，
  * 并注册跨平台共享的 typed [NavDestination] route。设计上把顶层 tab 收在 [MainTabs] 内部，而不是把每个 tab
@@ -722,9 +722,6 @@ fun ZhihuMain(
                             composable<Login> {
                                 LoginScreen(
                                     onLoginComplete = { navController.popBackStack() },
-                                    onOpenTelemetrySettings = {
-                                        navController.navigate(Account.SystemAndUpdateSettings("allowTelemetry"))
-                                    },
                                 )
                             }
                             composable<Question> { navEntry ->

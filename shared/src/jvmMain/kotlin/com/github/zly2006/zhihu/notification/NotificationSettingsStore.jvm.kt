@@ -27,7 +27,7 @@ actual fun rememberNotificationSettingsStore(): NotificationSettingsStore = reme
 fun desktopNotificationSettingsStore(): NotificationSettingsStore = DesktopNotificationSettingsStore()
 
 private class DesktopNotificationSettingsStore : NotificationSettingsStore {
-    private val propertiesFile = DesktopPropertiesFile("notification_settings.properties", "Zhihu++ desktop notification settings")
+    private val propertiesFile = DesktopPropertiesFile("notification_settings.properties", "DuZhi desktop notification settings")
     private val properties = propertiesFile.properties
 
     override fun getSystemNotificationEnabled(type: NotificationType): Boolean =

@@ -26,9 +26,10 @@ import io.ktor.http.HttpHeaders
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
-const val ZHIHU_PLUS_PLUS_GITHUB_LATEST_RELEASE_URL = "https://api.github.com/repos/zly2006/zhihu-plus-plus/releases/latest"
-const val ZHIHU_PLUS_PLUS_REDEN_LATEST_RELEASE_URL = "https://redenmc.com/api/zhihu/releases/latest"
-const val ZHIHU_PLUS_PLUS_GITHUB_NIGHTLY_RELEASE_URL = "https://api.github.com/repos/zly2006/zhihu-plus-plus/releases/tags/nightly"
+/** 项目仓库；检查更新、关于页、问题反馈和导出页脚都指向这里。 */
+const val PROJECT_REPOSITORY_URL = "https://github.com/in-Solitude/zhihu-plus-plus"
+const val PROJECT_LATEST_RELEASE_URL = "https://api.github.com/repos/in-Solitude/zhihu-plus-plus/releases/latest"
+const val PROJECT_NIGHTLY_RELEASE_URL = "https://api.github.com/repos/in-Solitude/zhihu-plus-plus/releases/tags/nightly"
 
 @Serializable
 data class GithubRelease(
@@ -43,7 +44,6 @@ data class GithubAsset(
     val name: String,
     @SerialName("content_type") val contentType: String,
     @SerialName("browser_download_url") val browserDownloadUrl: String,
-    @SerialName("cn_download_url") val cnDownloadUrl: String? = null,
 )
 
 fun extractGithubReleaseNotes(body: String): String = body
@@ -55,10 +55,8 @@ fun extractGithubReleaseNotes(body: String): String = body
 suspend fun fetchLatestZhihuRelease(
     client: HttpClient,
     githubToken: String?,
-): GithubRelease = runCatching {
-    client.get(ZHIHU_PLUS_PLUS_REDEN_LATEST_RELEASE_URL).raiseForStatus().body<GithubRelease>()
-}.getOrNull() ?: client
-    .get(ZHIHU_PLUS_PLUS_GITHUB_LATEST_RELEASE_URL) {
+): GithubRelease = client
+    .get(PROJECT_LATEST_RELEASE_URL) {
         githubToken?.let { token ->
             headers {
                 append(HttpHeaders.Authorization, "Bearer $token")
@@ -71,7 +69,7 @@ suspend fun fetchNightlyZhihuRelease(
     client: HttpClient,
     githubToken: String?,
 ): GithubRelease = client
-    .get(ZHIHU_PLUS_PLUS_GITHUB_NIGHTLY_RELEASE_URL) {
+    .get(PROJECT_NIGHTLY_RELEASE_URL) {
         githubToken?.let { token ->
             headers {
                 append(HttpHeaders.Authorization, "Bearer $token")
@@ -82,7 +80,6 @@ suspend fun fetchNightlyZhihuRelease(
 
 internal data class AndroidReleaseDownloadInfo(
     val browserDownloadUrl: String,
-    val cnDownloadUrl: String? = null,
     val opensExternally: Boolean = false,
 )
 
@@ -91,7 +88,7 @@ internal fun GithubRelease.extractAndroidDownloadInfo(isLiteVariant: Boolean): A
     val variant = if (isLiteVariant) "lite" else "full"
     val selectedAsset = apkAssets.firstOrNull { it.name.contains(variant, ignoreCase = true) } ?: apkAssets.firstOrNull()
     if (selectedAsset != null) {
-        return AndroidReleaseDownloadInfo(selectedAsset.browserDownloadUrl, selectedAsset.cnDownloadUrl)
+        return AndroidReleaseDownloadInfo(selectedAsset.browserDownloadUrl)
     }
     val quarkUrl = Regex("""https://pan\.quark\.cn/s/[A-Za-z0-9_-]+(?:\?[A-Za-z0-9._~%!$&*+,;=:@/?-]+)?""")
         .find(body.orEmpty())

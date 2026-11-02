@@ -113,7 +113,7 @@ fun saveBitmapToGallery(
         context = context,
         displayName = displayName,
         mimeType = "image/jpeg",
-        relativePath = Environment.DIRECTORY_PICTURES + "/Zhihu++",
+        relativePath = Environment.DIRECTORY_PICTURES + "/DuZhi",
     ) { outputStream ->
         if (!bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)) {
             throw IllegalStateException("Failed to encode image")

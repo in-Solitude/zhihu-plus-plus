@@ -153,7 +153,7 @@ internal class DesktopPropertiesFile(
 }
 
 fun desktopZhihuDownloadsDir(errorMessage: String = "无法创建下载目录"): File =
-    File(System.getProperty("user.home"), "Downloads/Zhihu++").also { directory ->
+    File(System.getProperty("user.home"), "Downloads/DuZhi").also { directory ->
         if (!directory.exists() && !directory.mkdirs()) {
             throw IllegalStateException(errorMessage)
         }

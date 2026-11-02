@@ -1,6 +1,9 @@
-# Zhihu++（in-Solitude 维护版）
+# 独知 DuZhi
 
-隐私增强、无广告的知乎客户端。本仓库是 [zly2006/zhihu-plus-plus](https://github.com/zly2006/zhihu-plus-plus) 的个人维护分支：原作者已停更，基线是上游 `eb9d9a7`，之后的改动记在 README 的“相对上游的改动”一节。
+隐私增强、无广告的知乎第三方客户端，由 in-Solitude 独立维护。项目派生自 Zhihu++（AGPL-3.0-only），已和原项目断开运行时联系：不连接原作者的服务器、不展示原作者的内容，检查更新和项目链接都指向本仓库。改动记在 README 的“相对 Zhihu++ 的改动”一节。
+
+- 许可证义务：保留 `LICENSE` 和各源文件里原作者的版权头；README 里那行派生与修改声明不要删；应用内“项目协议”入口要一直在。新文件用 `.copyright` 里的版权头。
+- 不要重新接入任何原作者的服务器、账号、群组或仓库地址；需要后端时由 in-Solitude 自己部署。
 
 ## 协作方式
 
@@ -9,7 +12,7 @@
 - 产品方向：**交互尽量贴近知乎官方 App**。不确定官方怎么做时，先说清楚自己的理解或直接问，不要凭印象补细节。
 - 改默认值、删除或替换已有功能、调整信息架构，这些属于产品决定，动手前先确认；纯实现细节自己判断。
 - 修 bug 时只修这个 bug，不顺手改无关的布局、默认值或交互。
-- 用户可见的行为变了，就同步更新 README 的“相对上游的改动”。
+- 用户可见的行为变了，就同步更新 README 的“相对 Zhihu++ 的改动”。
 
 ## Git 与 PR
 
@@ -28,9 +31,8 @@
 | `shared-local-db` | Room 本地数据库 |
 | `third_party/` | 直接带进仓库的 markdown、latex、代码高亮渲染库；不要拿上游新版本整体覆盖 |
 | `rs-zse-sign`、`rs-hf-tokenizer`、`sentence_embeddings` | Rust：zse96 签名、分词器（分词器仅 full 变体使用） |
-| `aigc-vote-server` | AIGC 标记投票的 Rust 后端 |
 
-包名：lite 是 `com.github.zly2006.zhplus.lite`，full 是 `com.github.zly2006.zhplus`。
+包名（applicationId）：lite 是 `io.github.insolitude.duzhi.lite`，full 是 `io.github.insolitude.duzhi`。Kotlin 代码包名仍是 `com.github.zly2006.zhihu`，不要为了改名去动它。
 
 ## 关键约定
 

@@ -366,7 +366,7 @@ class PeopleScreenInstrumentedTest {
             seededViewModel.officialBadge = OfficialBadge(
                 title = "优秀答主",
                 description = "英语等 5 个话题下的优秀答主",
-                iconUrl = DataHolder.ZH_PLUS_AUTHOR_BADGE_ICON,
+                iconUrl = "https://example.invalid/badge/offline.png",
             )
             seededViewModel.officialBadgeDetails = listOf(
                 OfficialBadge("社区成就", "英语等 5 个话题下的优秀答主"),
@@ -432,8 +432,8 @@ class PeopleScreenInstrumentedTest {
                     socialMedias = listOf(
                         DataHolder.SocialMedia(
                             icon = "https://example.invalid/github.png",
-                            title = "GitHub·zly2006",
-                            link = "zhihu://hybrid?zh_hide_nav_bar=true&zh_url=https:%2F%2Fwww.zhihu.com%2Fappview%2Fgithub%2Fdetail%3Fhash_id=ea09b6c82124e0162caa10d658058c10",
+                            title = "GitHub·example-user",
+                            link = "zhihu://hybrid?zh_hide_nav_bar=true&zh_url=https:%2F%2Fwww.zhihu.com%2Fappview%2Fgithub%2Fdetail%3Fhash_id=0123456789abcdef0123456789abcdef",
                             modules = listOf(
                                 DataHolder.SocialMediaModule("被关注人", "169"),
                                 DataHolder.SocialMediaModule("公开仓库数", "119"),
@@ -500,16 +500,16 @@ class PeopleScreenInstrumentedTest {
         followingCount = 45,
         answerCount = itemCount,
         articlesCount = itemCount,
-        apiBadgeV2 = DataHolder.BadgeV2(
+        badgeV2 = DataHolder.BadgeV2(
             title = "优秀答主",
-            icon = DataHolder.ZH_PLUS_AUTHOR_BADGE_ICON,
+            icon = "https://example.invalid/badge/offline.png",
             detailBadges = listOf(
                 DataHolder.BadgeV2.Badge(
                     type = "best",
                     detailType = "best_answerer",
                     title = "社区成就",
                     description = "英语等 5 个话题下的优秀答主",
-                    icon = DataHolder.ZH_PLUS_AUTHOR_BADGE_ICON,
+                    icon = "https://example.invalid/badge/offline.png",
                     badgeStatus = "passed",
                 ),
             ),

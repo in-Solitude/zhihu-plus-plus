@@ -70,9 +70,9 @@ jobs:
         run: |
           mkdir -p app/build/upload
           mkdir -p app/build/upload-lite
-          mv app/build/outputs/apk/full/debug/app-full-debug.apk app/build/upload/zhihu++-full-debug.apk
-          cp app/build/outputs/apk/lite/debug/app-lite-debug.apk app/build/upload/zhihu++-lite-debug.apk
-          mv app/build/outputs/apk/lite/debug/app-lite-debug.apk app/build/upload-lite/zhihu++-lite-debug.apk
+          mv app/build/outputs/apk/full/debug/app-full-debug.apk app/build/upload/duzhi-full-debug.apk
+          cp app/build/outputs/apk/lite/debug/app-lite-debug.apk app/build/upload/duzhi-lite-debug.apk
+          mv app/build/outputs/apk/lite/debug/app-lite-debug.apk app/build/upload-lite/duzhi-lite-debug.apk
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:

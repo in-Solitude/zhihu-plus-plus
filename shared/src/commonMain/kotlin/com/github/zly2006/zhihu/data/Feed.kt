@@ -496,12 +496,8 @@ data class Person(
     val isFollowed: Boolean = false,
     val isBlocking: Boolean = false,
     val badge: List<Badge>? = null,
-    @SerialName("badgeV2")
-    private val apiBadgeV2: DataHolder.BadgeV2? = null,
-) {
-    val badgeV2: DataHolder.BadgeV2?
-        get() = DataHolder.injectZhPlusAuthorBadge(id, apiBadgeV2)
-}
+    val badgeV2: DataHolder.BadgeV2? = null,
+)
 
 val Feed.Target.questionAuthor: Person?
     get() = when (this) {

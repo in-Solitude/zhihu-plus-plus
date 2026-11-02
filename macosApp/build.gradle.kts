@@ -69,7 +69,7 @@ val sharedMacosResources =
 
 listOf("Debug", "Release").forEach { buildType ->
     val buildTypeDirectory = buildType.lowercase()
-    val appDirectory = layout.buildDirectory.dir("bin/macosArm64/${buildTypeDirectory}App/Zhihu++.app")
+    val appDirectory = layout.buildDirectory.dir("bin/macosArm64/${buildTypeDirectory}App/DuZhi.app")
 
     val syncApp =
         tasks.register<Sync>("sync${buildType}MacosApp") {

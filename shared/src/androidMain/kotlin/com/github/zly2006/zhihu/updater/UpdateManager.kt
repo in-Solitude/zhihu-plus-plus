@@ -61,7 +61,6 @@ object UpdateManager {
             val isNightly: Boolean = false,
             val releaseNotes: String?,
             val downloadUrl: String,
-            val cnDownloadUrl: String?,
             val opensExternally: Boolean = false,
         ) : UpdateState()
 
@@ -135,7 +134,6 @@ object UpdateManager {
                         false,
                         latestResponse.body?.let(::extractGithubReleaseNotes),
                         latestDownloadInfo.browserDownloadUrl,
-                        latestDownloadInfo.cnDownloadUrl,
                         latestDownloadInfo.opensExternally,
                     )
                     return true // 有可用更新且未被跳过
@@ -200,7 +198,6 @@ object UpdateManager {
                     isNightly,
                     releaseNotes,
                     downloadInfo.browserDownloadUrl,
-                    downloadInfo.cnDownloadUrl,
                     downloadInfo.opensExternally,
                 )
             } else {

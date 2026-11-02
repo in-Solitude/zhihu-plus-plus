@@ -350,7 +350,7 @@ fun ExportDialogComponent(
                         )
                         Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "在导出底部加入知乎++开源项目说明",
+                            text = "在导出底部加入独知开源项目说明",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )

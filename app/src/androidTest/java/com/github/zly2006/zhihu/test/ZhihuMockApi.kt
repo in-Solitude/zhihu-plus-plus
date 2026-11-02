@@ -19,7 +19,7 @@ package com.github.zly2006.zhihu.test
 
 import com.github.zly2006.zhihu.account.accountHttpClientEngineForTesting
 import com.github.zly2006.zhihu.account.replaceAndroidZhihuAccountStoreForTesting
-import com.github.zly2006.zhihu.notification.ZHIHU_PLUS_PLUS_HOME_NOTIFICATIONS_URL
+import com.github.zly2006.zhihu.updater.PROJECT_LATEST_RELEASE_URL
 import io.ktor.client.engine.mock.MockEngine
 import io.ktor.client.engine.mock.MockRequestHandleScope
 import io.ktor.client.engine.mock.respond
@@ -128,7 +128,7 @@ object ZhihuMockApi {
             """.trimIndent()
         mockJson(
             method = HttpMethod.Get,
-            url = "https://api.github.com/repos/zly2006/zhihu-plus-plus/releases/latest",
+            url = PROJECT_LATEST_RELEASE_URL,
             body =
                 """
                 {
@@ -139,30 +139,6 @@ object ZhihuMockApi {
                       "name": "zhihu-lite.apk",
                       "content_type": "application/vnd.android.package-archive",
                       "browser_download_url": "https://example.invalid/zhihu-lite.apk"
-                    }
-                  ]
-                }
-                """.trimIndent(),
-        )
-        mockJsonPrefix(
-            method = HttpMethod.Get,
-            urlPrefix = "$ZHIHU_PLUS_PLUS_HOME_NOTIFICATIONS_URL?version=",
-            body = """{"notifications":[]}""",
-        )
-        mockJson(
-            method = HttpMethod.Get,
-            url = "https://redenmc.com/api/zhihu/releases/latest",
-            body =
-                """
-                {
-                  "tag_name": "0.0.0",
-                  "body": "",
-                  "assets": [
-                    {
-                      "name": "zhihu-lite.apk",
-                      "content_type": "application/vnd.android.package-archive",
-                      "browser_download_url": "https://example.invalid/zhihu-lite.apk",
-                      "cn_download_url": "https://example.invalid/zhihu-lite-cn.apk"
                     }
                   ]
                 }

@@ -233,7 +233,6 @@ private fun UpdateState.toSystemUpdateState(): SystemUpdateState = when (this) {
         isNightly = isNightly,
         releaseNotes = releaseNotes,
         downloadUrl = downloadUrl,
-        cnDownloadUrl = cnDownloadUrl,
     )
     UpdateState.Downloading -> SystemUpdateState.Downloading
     is UpdateState.Downloaded -> SystemUpdateState.Downloaded

@@ -376,7 +376,7 @@ fun SharedQrLoginPane(
     modifier: Modifier = Modifier,
     generateQrBitmap: (String) -> ImageBitmap = ::generateQrLoginBitmap,
     initialCookies: Map<String, String> = emptyMap(),
-    qrReadyMessage: String = "请打开知乎++ App 扫一扫",
+    qrReadyMessage: String = "请打开独知 App 扫一扫",
     onQrReady: () -> Unit = {},
 ) {
     var refreshKey by rememberSaveable { mutableIntStateOf(0) }

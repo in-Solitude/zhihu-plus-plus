@@ -94,7 +94,7 @@ jobs:
       - name: Prepare Lite debug APK
         run: |
           mkdir -p app/build/upload
-          cp app/build/outputs/apk/lite/debug/app-lite-debug.apk app/build/upload/zhihu++-lite-debug.apk
+          cp app/build/outputs/apk/lite/debug/app-lite-debug.apk app/build/upload/duzhi-lite-debug.apk
 
       - name: Upload Lite debug APK
         uses: actions/upload-artifact@v4

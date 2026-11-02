@@ -65,7 +65,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -73,7 +72,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.github.zly2006.zhihu.data.AIGC_MARKING_ENABLED_PREFERENCE_KEY
 import com.github.zly2006.zhihu.navigation.LocalNavigator
 import com.github.zly2006.zhihu.platform.platformName
 import com.github.zly2006.zhihu.platform.rememberExternalUrlOpener
@@ -83,22 +81,20 @@ import com.github.zly2006.zhihu.ui.components.SettingItemGroup
 import com.github.zly2006.zhihu.ui.components.SettingItemWithSwitch
 import com.github.zly2006.zhihu.ui.components.pageTurnViewportWithGuide
 import com.github.zly2006.zhihu.ui.components.rememberPageTurnTarget
+import com.github.zly2006.zhihu.updater.PROJECT_REPOSITORY_URL
 import com.github.zly2006.zhihu.util.ContinuousUsageReminderPolicy
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.painterResource
 import zhihu.shared.generated.resources.Res
-import zhihu.shared.generated.resources.ic_discord_24dp
 import zhihu.shared.generated.resources.ic_github_24dp
-import zhihu.shared.generated.resources.ic_telegram_24dp
 
 internal const val CONTINUOUS_USAGE_REMINDER_INTERVAL_MINUTES_KEY = "continuousUsageReminderIntervalMinutes"
 internal const val MACOS_QUIT_ON_WINDOW_CLOSE_PREFERENCE_KEY = "macosQuitOnWindowClose"
-const val SYSTEM_SETTINGS_AIGC_MARKING_TAG = "system_settings_aigc_marking"
 
 /**
  * 系统、更新和外部服务设置页。
  *
- * 页面展示更新横幅、下载/安装/跳过版本操作、GitHub Token、Nightly、遥测、防沉迷提醒和社区链接。
+ * 页面展示更新横幅、下载/安装/跳过版本操作、GitHub Token、Nightly、防沉迷提醒和问题反馈链接。
  * 更新相关状态与动作由细粒度平台能力提供，防沉迷间隔写入 [CONTINUOUS_USAGE_REMINDER_INTERVAL_MINUTES_KEY]，
  * 改动时要同时考虑 Android 更新管理器和 Desktop 运行时。
  */
@@ -206,12 +202,12 @@ fun SystemAndUpdateSettingsScreen(
                                     SelectionContainer {
                                         Text(
                                             buildAnnotatedString {
-                                                val prRegex = Regex("https://github.com/zly2006/zhihu-plus-plus/pull/(\\d+)")
+                                                val prRegex = Regex("$PROJECT_REPOSITORY_URL/pull/(\\d+)")
                                                 var lastIndex = 0
                                                 prRegex.findAll(releaseNotes!!).forEach { matchResult ->
                                                     append(releaseNotes!!.substring(lastIndex, matchResult.range.first))
                                                     val prNumber = matchResult.groupValues[1]
-                                                    withLink(LinkAnnotation.Url("https://github.com/zly2006/zhihu-plus-plus/pull/$prNumber")) {
+                                                    withLink(LinkAnnotation.Url("$PROJECT_REPOSITORY_URL/pull/$prNumber")) {
                                                         withStyle(
                                                             MaterialTheme.typography.bodyMedium
                                                                 .copy(color = MaterialTheme.colorScheme.primary)
@@ -230,7 +226,7 @@ fun SystemAndUpdateSettingsScreen(
                                     }
                                     Spacer(modifier = Modifier.height(12.dp))
                                     TextButton(
-                                        onClick = { openExternalUrl("https://github.com/zly2006/zhihu-plus-plus/releases") },
+                                        onClick = { openExternalUrl("$PROJECT_REPOSITORY_URL/releases") },
                                         modifier = Modifier.align(Alignment.End),
                                     ) {
                                         Text("查看完整更新日志")
@@ -245,27 +241,6 @@ fun SystemAndUpdateSettingsScreen(
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
-                        val cnDownloadUrl = (updateState as? SystemUpdateState.UpdateAvailable)?.cnDownloadUrl
-                        if (!cnDownloadUrl.isNullOrBlank()) {
-                            Button(
-                                onClick = {
-                                    runCatching {
-                                        openExternalUrl(cnDownloadUrl)
-                                    }.onFailure {
-                                        setSystemUpdateError(it.message ?: "无法打开浏览器")
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text("使用国内网盘加速下载", Modifier.padding(0.dp, 4.dp))
-                            }
-                            Text(
-                                "使用国内网盘下载，不需要梯，网络稳定。您也可以选择使用GitHub下载。",
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                            Spacer(modifier = Modifier.height(12.dp))
-                        }
-
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -379,39 +354,6 @@ fun SystemAndUpdateSettingsScreen(
                     settingKey = "checkNightlyUpdates",
                     highlightedKey = highlightedSetting,
                 )
-
-                var allowTelemetry by remember { mutableStateOf(settings.getBoolean("allowTelemetry", true)) }
-                SettingItemWithSwitch(
-                    title = { Text("允许发送遥测统计数据") },
-                    description = { Text("仅用于统计使用人数，不包含个人隐私") },
-                    checked = allowTelemetry,
-                    onCheckedChange = {
-                        allowTelemetry = it
-                        settings.putBoolean("allowTelemetry", it)
-                    },
-                    settingKey = "allowTelemetry",
-                    highlightedKey = highlightedSetting,
-                )
-
-                var aigcMarkingEnabled by remember {
-                    mutableStateOf(settings.getBoolean(AIGC_MARKING_ENABLED_PREFERENCE_KEY, false))
-                }
-                SettingItemWithSwitch(
-                    modifier = Modifier.testTag(SYSTEM_SETTINGS_AIGC_MARKING_TAG),
-                    title = { Text("启用 AIGC 标记") },
-                    description = {
-                        Text(
-                            "如果启用，会把你正在浏览的内容发送到我们的服务器，这样你可以知道其他用户是否认为其疑似 AIGC。默认关闭，不会发送隐私信息。",
-                        )
-                    },
-                    checked = aigcMarkingEnabled,
-                    onCheckedChange = {
-                        aigcMarkingEnabled = it
-                        settings.putBoolean(AIGC_MARKING_ENABLED_PREFERENCE_KEY, it)
-                    },
-                    settingKey = AIGC_MARKING_ENABLED_PREFERENCE_KEY,
-                    highlightedKey = highlightedSetting,
-                )
             }
 
             AnimatedVisibility(visible = !showUpdateBanner) {
@@ -512,38 +454,7 @@ fun SystemAndUpdateSettingsScreen(
                 )
             }
 
-            SettingItemGroup(
-                title = "交流 & 闲聊",
-                footer = { Text("代码和功能反馈请前往GitHub。上边的频道用于用户交流和闲聊，开发者不一定会在线回答问题。") },
-            ) {
-                SettingItem(
-                    title = { Text("Discord 频道") },
-                    description = { Text("请在 my-other-apps/zhihu-plus-plus 频道讨论") },
-                    icon = { Icon(painterResource(Res.drawable.ic_discord_24dp), null) },
-                    endAction = {
-                        Icon(
-                            Icons.Default.ArrowOutward,
-                            null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
-                    onClick = { openExternalUrl("https://discord.gg/YCPFZV5XSA") },
-                )
-
-                SettingItem(
-                    title = { Text("Telegram 群组 (Hydrogen)") },
-                    description = { Text("另一个知乎客户端 Hydrogen 的群组，也可以在里面讨论知乎++哦") },
-                    icon = { Icon(painterResource(Res.drawable.ic_telegram_24dp), null) },
-                    endAction = {
-                        Icon(
-                            Icons.Default.ArrowOutward,
-                            null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
-                    onClick = { openExternalUrl("https://t.me/+_A1Yto6EpyIyODA1") },
-                )
-
+            SettingItemGroup(title = "问题反馈") {
                 SettingItem(
                     title = { Text("Github issue") },
                     description = { Text("欢迎提交 issue 讨论功能和反馈问题") },
@@ -555,7 +466,7 @@ fun SystemAndUpdateSettingsScreen(
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                     },
-                    onClick = { openExternalUrl("https://github.com/zly2006/zhihu-plus-plus/issues") },
+                    onClick = { openExternalUrl("$PROJECT_REPOSITORY_URL/issues") },
                 )
             }
         }

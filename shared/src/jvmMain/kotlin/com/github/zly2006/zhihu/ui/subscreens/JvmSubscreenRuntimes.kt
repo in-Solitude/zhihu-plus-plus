@@ -152,7 +152,6 @@ private suspend fun checkDesktopUpdate(
                         .firstOrNull()
                         ?.browserDownloadUrl
                         .orEmpty(),
-                    cnDownloadUrl = latestResponse.assets.firstOrNull()?.cnDownloadUrl,
                 )
             } else {
                 state.value = SystemUpdateState.Latest

@@ -23,11 +23,11 @@
     <key>CFBundleExecutable</key>
     <string>ZhihuPlusPlus</string>
     <key>CFBundleIdentifier</key>
-    <string>com.github.zly2006.zhihu.macos</string>
+    <string>io.github.insolitude.duzhi.macos</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>
-    <string>Zhihu++</string>
+    <string>独知</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>

@@ -165,7 +165,6 @@ private suspend fun checkNativeUpdate(
                         .firstOrNull()
                         ?.browserDownloadUrl
                         .orEmpty(),
-                    cnDownloadUrl = latestResponse.assets.firstOrNull()?.cnDownloadUrl,
                 )
             } else {
                 nativeSystemUpdateState.value = SystemUpdateState.Latest

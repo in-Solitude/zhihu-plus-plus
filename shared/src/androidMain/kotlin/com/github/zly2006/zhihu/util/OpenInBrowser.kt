@@ -44,15 +44,15 @@ object OpenInBrowser {
         val jojo = environment.fetchJson("https://www.zhihu.com/api/v4/people/$urlToken/collections?limit=50", "")!!
         val collection = ZhihuJson
             .decodeJson<List<Collection>>(jojo["data"]!!)
-            .firstOrNull { it.description == "com.github.zly2006.zhplus.openinbrowser" }
+            .firstOrNull { it.description == "io.github.insolitude.duzhi.openinbrowser" }
             ?: ZhihuJson.decodeJson<Collection>(
                 environment
                     .postSigned("https://www.zhihu.com/api/v4/collections") {
                         contentType(ContentType.Application.Json)
                         setBody(
                             buildJsonObject {
-                                put("title", "Zhihu++: 要在浏览器中打开的内容")
-                                put("description", "com.github.zly2006.zhplus.openinbrowser")
+                                put("title", "独知：要在浏览器中打开的内容")
+                                put("description", "io.github.insolitude.duzhi.openinbrowser")
                                 put("is_public", false)
                             },
                         )

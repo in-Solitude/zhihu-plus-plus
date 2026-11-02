@@ -118,7 +118,7 @@ class ArticleExportEnvironmentInstrumentedTest {
             File(
                 File(
                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                    "Zhihu++",
+                    "DuZhi",
                 ),
                 displayName,
             ).exists()
@@ -131,7 +131,7 @@ class ArticleExportEnvironmentInstrumentedTest {
             File(
                 File(
                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                    "Zhihu++",
+                    "DuZhi",
                 ),
                 displayName,
             ).length()
@@ -148,7 +148,7 @@ class ArticleExportEnvironmentInstrumentedTest {
             File(
                 File(
                     Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-                    "Zhihu++",
+                    "DuZhi",
                 ),
                 displayName,
             ).delete()

@@ -36,43 +36,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlin.jvm.JvmInline
 
 object DataHolder {
-    const val ZH_PLUS_AUTHOR_USER_ID = "ea09b6c82124e0162caa10d658058c10"
-    const val ZH_PLUS_AUTHOR_BADGE_ICON = "zhplus://zh_plus_author_badge_icon"
-
-    val zhPlusAuthorBadgeV2 = BadgeV2(
-        title = "知乎++ 作者",
-        mergedBadges = listOf(
-            BadgeV2.Badge(
-                type = "zhihu_plus_author",
-                detailType = "zhihu_plus_author",
-                title = "知乎++",
-                description = "作者",
-                icon = ZH_PLUS_AUTHOR_BADGE_ICON,
-                nightIcon = ZH_PLUS_AUTHOR_BADGE_ICON,
-                badgeStatus = "passed",
-            ),
-        ),
-        detailBadges = listOf(
-            BadgeV2.Badge(
-                type = "zhihu_plus_author",
-                detailType = "zhihu_plus_author",
-                title = "知乎++",
-                description = "作者",
-                icon = ZH_PLUS_AUTHOR_BADGE_ICON,
-                nightIcon = ZH_PLUS_AUTHOR_BADGE_ICON,
-                badgeStatus = "passed",
-            ),
-        ),
-        icon = ZH_PLUS_AUTHOR_BADGE_ICON,
-        nightIcon = ZH_PLUS_AUTHOR_BADGE_ICON,
-    )
-
-    fun injectZhPlusAuthorBadge(userId: String, badgeV2: BadgeV2?): BadgeV2? = if (userId == ZH_PLUS_AUTHOR_USER_ID) {
-        zhPlusAuthorBadgeV2
-    } else {
-        badgeV2
-    }
-
     @Serializable
     sealed interface Content
 
@@ -707,16 +670,12 @@ object DataHolder {
             val headline: String,
             val gender: Int,
             val isAdvertiser: Boolean,
-            @SerialName("badgeV2")
-            private val apiBadgeV2: BadgeV2? = null,
+            val badgeV2: BadgeV2? = null,
             val exposedMedal: JsonElement? = null,
             val vipInfo: JsonElement? = null,
             val levelInfo: JsonElement? = null,
             val kvipInfo: JsonElement? = null,
-        ) {
-            val badgeV2: BadgeV2?
-                get() = injectZhPlusAuthorBadge(id, apiBadgeV2)
-        }
+        )
 
         @Serializable
         data class CommentTag(
@@ -754,8 +713,7 @@ object DataHolder {
         val ipInfo: String? = null,
         val vipInfo: VipInfo? = null,
         val kvipInfo: JsonElement? = null,
-        @SerialName("badgeV2")
-        private val apiBadgeV2: BadgeV2? = null,
+        val badgeV2: BadgeV2? = null,
         val allowMessage: Boolean = true,
         val isFollowing: Boolean = false,
         val isFollowed: Boolean = false,
@@ -769,10 +727,7 @@ object DataHolder {
         val orgVerifyStatus: JsonElement? = null,
         val isRealname: Boolean = false,
         val hasApplyingColumn: Boolean = false,
-    ) {
-        val badgeV2: BadgeV2?
-            get() = injectZhPlusAuthorBadge(id, apiBadgeV2)
-    }
+    )
 
     @Serializable
     data class Collection(

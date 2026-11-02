@@ -41,7 +41,7 @@ actual fun Modifier.exportTestTagsForUiAutomation(): Modifier = this
 actual fun rememberAppPrivateDirectory(): Path = remember { Path(desktopZhihuDataDir().absolutePath) }
 
 fun desktopSettingsStore(): SettingsStore {
-    val propertiesFile = DesktopPropertiesFile("settings.properties", "Zhihu++ desktop settings")
+    val propertiesFile = DesktopPropertiesFile("settings.properties", "DuZhi desktop settings")
     val properties = propertiesFile.properties
 
     return object : SettingsStore {
@@ -234,8 +234,6 @@ actual val platformName: String = "JVM"
 actual val isJvm: Boolean = true
 
 actual val isNative: Boolean = false
-
-actual val isAigcVoteSupported: Boolean = false
 
 actual val isBlocklistNlpSupported: Boolean = false
 

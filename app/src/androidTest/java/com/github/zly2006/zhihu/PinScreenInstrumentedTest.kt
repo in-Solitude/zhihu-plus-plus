@@ -174,14 +174,14 @@ class PinScreenInstrumentedTest {
             userType = "people",
             badgeV2 = DataHolder.BadgeV2(
                 title = "离线优秀答主",
-                icon = DataHolder.ZH_PLUS_AUTHOR_BADGE_ICON,
+                icon = "https://example.invalid/badge/offline.png",
                 detailBadges = listOf(
                     DataHolder.BadgeV2.Badge(
                         type = "best",
                         detailType = "best_answerer",
                         title = "优秀答主",
                         description = "离线优秀答主",
-                        icon = DataHolder.ZH_PLUS_AUTHOR_BADGE_ICON,
+                        icon = "https://example.invalid/badge/offline.png",
                         badgeStatus = "passed",
                     ),
                 ),
@@ -237,7 +237,7 @@ class PinScreenInstrumentedTest {
                 bottomPoll = DataHolder.Pin.BottomPoll(
                     voting = DataHolder.Pin.Poll(
                         id = "poll-101",
-                        title = "知乎++好用吗",
+                        title = "独知好用吗",
                         maxSelections = 1,
                         type = "single",
                         endAt = -1,

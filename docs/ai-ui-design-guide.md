@@ -1,4 +1,4 @@
-# Zhihu++ AI UI Design Guide
+# 独知 AI UI Design Guide
 
 这份文档给 AI agent 快速建立 UI、导航、按钮和设置项的共同语义。改代码前仍然要读对应源码；这里负责告诉你先读哪里、状态从哪里来、一个开关会影响哪些界面。
 
@@ -126,7 +126,6 @@ URL 解析集中在 `resolveContent()`。支持知乎问题、回答、文章、
 | --- | --- | --- | --- |
 | `githubToken` | GitHub Token | 更新检查 API 限速 | 不要打印或提交真实 token |
 | `checkNightlyUpdates` | Nightly 更新 | 是否检查每日构建 | Android updater 和 Desktop runtime 都读 |
-| `allowTelemetry` | 遥测统计 | 匿名使用统计 | 不影响核心功能 |
 | `continuousUsageReminderIntervalMinutes` | 防沉迷提醒 | 连续使用提醒间隔 | 0 表示关闭 |
 | `developer` | 开发者模式 | 账号页显示开发者选项 | 账号页点击版本 5 次开启 |
 | `enableScrollEndHaptic` | 开发者选项: 滚动到底震动 | 滚动边界反馈行为开关 | 改前查具体 overScroll 使用点 |

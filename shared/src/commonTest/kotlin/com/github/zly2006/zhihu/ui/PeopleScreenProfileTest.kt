@@ -48,8 +48,8 @@ class PeopleScreenProfileTest {
                   "socialMedias": [
                     {
                       "icon": "https://example.invalid/github.png",
-                      "title": "GitHub·zly2006",
-                      "link": "zhihu://hybrid?zh_hide_nav_bar=true&zh_url=https:%2F%2Fwww.zhihu.com%2Fappview%2Fgithub%2Fdetail%3Fhash_id=ea09b6c82124e0162caa10d658058c10",
+                      "title": "GitHub·example-user",
+                      "link": "zhihu://hybrid?zh_hide_nav_bar=true&zh_url=https:%2F%2Fwww.zhihu.com%2Fappview%2Fgithub%2Fdetail%3Fhash_id=0123456789abcdef0123456789abcdef",
                       "modules": [
                         {"title": "被关注人", "value": "169"},
                         {"title": "公开仓库数", "value": "119"},
@@ -63,9 +63,9 @@ class PeopleScreenProfileTest {
 
         val githubSocial = ZhihuJson.decodeJson<DataHolder.People>(rawProfile).githubSocialUiState()
 
-        assertEquals("GitHub·zly2006", githubSocial?.title)
+        assertEquals("GitHub·example-user", githubSocial?.title)
         assertEquals("4.0k", githubSocial?.starCount)
-        assertEquals("https://github.com/zly2006", githubSocial?.profileUrl)
+        assertEquals("https://github.com/example-user", githubSocial?.profileUrl)
         assertEquals("https://example.invalid/github.png", githubSocial?.iconUrl)
     }
 
@@ -78,8 +78,8 @@ class PeopleScreenProfileTest {
                     modules = listOf(DataHolder.SocialMediaModule("stars", "10")),
                 ),
                 DataHolder.SocialMedia(
-                    title = "GitHub·zly2006",
-                    link = "https://github.com/zly2006",
+                    title = "GitHub·example-user",
+                    link = "https://github.com/example-user",
                     modules = listOf(DataHolder.SocialMediaModule("公开仓库数", "119")),
                 ),
             ),
@@ -93,7 +93,7 @@ class PeopleScreenProfileTest {
         val profile = people(
             socialMedias = listOf(
                 DataHolder.SocialMedia(
-                    title = "GitHub·zly2006",
+                    title = "GitHub·example-user",
                     modules = listOf(DataHolder.SocialMediaModule("stars", "4.0k")),
                 ),
             ),
@@ -119,7 +119,7 @@ class PeopleScreenProfileTest {
 
         assertTrue(viewModel.isBlocking)
         assertEquals("4.0k", viewModel.githubSocial?.starCount)
-        assertEquals("https://github.com/zly2006", viewModel.githubSocial?.profileUrl)
+        assertEquals("https://github.com/example-user", viewModel.githubSocial?.profileUrl)
         assertEquals(
             listOf(
                 "https://api.zhihu.com/people/profile-user" to PEOPLE_PROFILE_INCLUDE_PATH,
@@ -167,8 +167,8 @@ class PeopleScreenProfileTest {
 
     private fun githubSocialMedia() = DataHolder.SocialMedia(
         icon = "https://example.invalid/github.png",
-        title = "GitHub·zly2006",
-        link = "https://github.com/zly2006",
+        title = "GitHub·example-user",
+        link = "https://github.com/example-user",
         modules = listOf(
             DataHolder.SocialMediaModule("被关注人", "169"),
             DataHolder.SocialMediaModule("公开仓库数", "119"),

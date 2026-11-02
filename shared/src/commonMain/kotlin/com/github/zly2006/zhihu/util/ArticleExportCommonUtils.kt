@@ -20,6 +20,7 @@ package com.github.zly2006.zhihu.util
 import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Element
 import com.github.zly2006.zhihu.data.DataHolder
+import com.github.zly2006.zhihu.updater.PROJECT_REPOSITORY_URL
 import com.github.zly2006.zhihu.util.twoDigitString
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
@@ -40,7 +41,7 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
 const val ARTICLE_EXPORT_TEMPLATE_ASSET = "article_export_template.html"
-const val ARTICLE_EXPORT_GITHUB_URL = "https://github.com/zly2006/zhihu-plus-plus"
+const val ARTICLE_EXPORT_GITHUB_URL = PROJECT_REPOSITORY_URL
 private const val ARTICLE_EXPORT_IMAGE_FETCH_CONCURRENCY = 6
 
 data class ArticleExportFooterData(
@@ -501,7 +502,7 @@ fun buildArticleExportFileName(
         .ifBlank { "匿名作者" }
     val normalizedExtension = extension.trimStart('.')
 
-    return "zhihu++_${safeTitle}_${safeAuthorName}的${typeLabel}_${typeKey}_${articleId}_$timestamp.$normalizedExtension"
+    return "duzhi_${safeTitle}_${safeAuthorName}的${typeLabel}_${typeKey}_${articleId}_$timestamp.$normalizedExtension"
 }
 
 @OptIn(ExperimentalTime::class)
@@ -510,7 +511,7 @@ fun buildCollectionExportZipFileName(
     timestampMillis: Long = Clock.System.now().toEpochMilliseconds(),
 ): String {
     val safeTitle = sanitizeArticleExportFileNamePart(collectionTitle).ifBlank { "收藏夹" }
-    return "zhihu++_${safeTitle}_${formatArticleExportFileTimestamp(timestampMillis)}.zip"
+    return "duzhi_${safeTitle}_${formatArticleExportFileTimestamp(timestampMillis)}.zip"
 }
 
 fun sanitizeArticleExportFileNamePart(text: String): String = text

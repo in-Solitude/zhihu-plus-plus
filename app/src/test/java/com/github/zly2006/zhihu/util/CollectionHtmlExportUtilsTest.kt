@@ -40,7 +40,7 @@ class CollectionHtmlExportUtilsTest {
                     FakeExportItem(
                         title = "已导出回答",
                         resolved = ResolvedCollectionHtmlExportItem(
-                            htmlFileName = "zhihu++_answer_1.html",
+                            htmlFileName = "duzhi_answer_1.html",
                             htmlContent = "<html><body>answer</body></html>",
                         ),
                     ),
@@ -51,7 +51,7 @@ class CollectionHtmlExportUtilsTest {
                     FakeExportItem(
                         title = "已导出文章",
                         resolved = ResolvedCollectionHtmlExportItem(
-                            htmlFileName = "zhihu++_article_2.html",
+                            htmlFileName = "duzhi_article_2.html",
                             htmlContent = "<html><body>article</body></html>",
                         ),
                     ),
@@ -76,13 +76,13 @@ class CollectionHtmlExportUtilsTest {
                 result.zipFile?.name,
             )
             assertTrue(result.stagingDir.exists())
-            assertTrue(result.stagingDir.resolve("zhihu++_answer_1.html").exists())
-            assertTrue(result.stagingDir.resolve("zhihu++_article_2.html").exists())
+            assertTrue(result.stagingDir.resolve("duzhi_answer_1.html").exists())
+            assertTrue(result.stagingDir.resolve("duzhi_article_2.html").exists())
             assertNotNull(result.zipFile)
 
             ZipFile(result.zipFile!!).use { zipFile ->
-                assertNotNull(zipFile.getEntry("zhihu++_answer_1.html"))
-                assertNotNull(zipFile.getEntry("zhihu++_article_2.html"))
+                assertNotNull(zipFile.getEntry("duzhi_answer_1.html"))
+                assertNotNull(zipFile.getEntry("duzhi_article_2.html"))
             }
 
             assertTrue(progressUpdates.isNotEmpty())

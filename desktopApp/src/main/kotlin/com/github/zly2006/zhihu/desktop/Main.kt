@@ -28,7 +28,7 @@ fun main() {
     application {
         Window(
             onCloseRequest = ::exitApplication,
-            title = "Zhihu++",
+            title = "独知",
             icon = painterResource("desktop-icon.png"),
         ) {
             ZhihuTheme {

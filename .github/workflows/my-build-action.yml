@@ -84,7 +84,7 @@ jobs:
           mkdir -p desktopApp/build/upload
           msi="$(find desktopApp/build/compose/binaries -name '*.msi' | head -n 1)"
           test -n "$msi"
-          cp "$msi" "desktopApp/build/upload/zhihu++-desktop-${{ steps.desktop_suffix.outputs.suffix }}.msi"
+          cp "$msi" "desktopApp/build/upload/duzhi-desktop-${{ steps.desktop_suffix.outputs.suffix }}.msi"
 
       - name: Package Linux AppImage
         if: runner.os == 'Linux'
@@ -112,10 +112,10 @@ jobs:
           launcher_name="$(basename "$(find "$appdir/bin" -maxdepth 1 -type f -perm -u+x | head -n 1)")"
           test -n "$launcher_name"
 
-          cat > "$appdir/zhihu-plus-plus.desktop" <<EOF
+          cat > "$appdir/duzhi.desktop" <<EOF
           [Desktop Entry]
           Type=Application
-          Name=Zhihu++
+          Name=独知
           Comment=自由、无广告的知乎第三方客户端
           Exec=AppRun
           Icon=$icon_name
@@ -130,7 +130,7 @@ jobs:
           EOF
           chmod +x "$appdir/AppRun"
 
-          out="desktopApp/build/upload/zhihu++-desktop-${{ steps.desktop_suffix.outputs.suffix }}.AppImage"
+          out="desktopApp/build/upload/duzhi-desktop-${{ steps.desktop_suffix.outputs.suffix }}.AppImage"
           abs_out="$PWD/$out"
           appimagetool="$RUNNER_TEMP/appimagetool-x86_64.AppImage"
           appimagetool_version="1.9.1"
@@ -159,9 +159,9 @@ jobs:
         run: |
           ./gradlew -Dorg.gradle.jvmargs="-Xmx5120m -Dfile.encoding=UTF-8" ${{ inputs.args }} :macosApp:packageReleaseMacosApp :macosUiDebug:verifyMacosReleaseIsolation
 
-          app_bundle="macosApp/build/bin/macosArm64/releaseApp/Zhihu++.app"
+          app_bundle="macosApp/build/bin/macosArm64/releaseApp/DuZhi.app"
           app_executable="$app_bundle/Contents/MacOS/ZhihuPlusPlus"
-          app_archive="desktopApp/build/upload/zhihu++-desktop-${{ steps.desktop_suffix.outputs.suffix }}.app.zip"
+          app_archive="desktopApp/build/upload/duzhi-desktop-${{ steps.desktop_suffix.outputs.suffix }}.app.zip"
           extracted_dir="$RUNNER_TEMP/zhihu-native-release"
 
           test -d "$app_bundle"
@@ -171,14 +171,14 @@ jobs:
           mkdir -p desktopApp/build/upload
           /usr/bin/ditto -c -k --sequesterRsrc --keepParent "$app_bundle" "$app_archive"
           /usr/bin/ditto -x -k "$app_archive" "$extracted_dir"
-          /usr/bin/codesign --verify --deep --strict "$extracted_dir/Zhihu++.app"
+          /usr/bin/codesign --verify --deep --strict "$extracted_dir/DuZhi.app"
 
       - name: Upload macOS Kotlin/Native app
         if: runner.os == 'macOS'
         uses: actions/upload-artifact@v4
         with:
           name: ${{ inputs.name }}-desktop-${{ steps.desktop_suffix.outputs.suffix }}
-          path: desktopApp/build/upload/zhihu++-desktop-${{ steps.desktop_suffix.outputs.suffix }}.app.zip
+          path: desktopApp/build/upload/duzhi-desktop-${{ steps.desktop_suffix.outputs.suffix }}.app.zip
 
   build:
     name: Build Android App
@@ -257,8 +257,8 @@ jobs:
       - name: Move files
         run: |
           mkdir -p app/build/upload
-          mv app/build/outputs/apk/full/release/app-full-release.apk app/build/upload/zhihu++-full.apk
-          mv app/build/outputs/apk/lite/release/app-lite-release.apk app/build/upload/zhihu++-lite.apk
+          mv app/build/outputs/apk/full/release/app-full-release.apk app/build/upload/duzhi-full.apk
+          mv app/build/outputs/apk/lite/release/app-lite-release.apk app/build/upload/duzhi-lite.apk
       - name: Compress lite mapping file
         if: ${{ inputs.minify }}
         run: |
@@ -409,12 +409,12 @@ jobs:
 
             ${{ steps.nightly_changelog.outputs.result }}
           files: |
-            app/build/upload/zhihu++-lite.apk
+            app/build/upload/duzhi-lite.apk
             app/build/upload/mapping-lite.zip
-            app/build/upload/zhihu++-full.apk
-            app/build/upload/zhihu++-desktop-*.AppImage
-            app/build/upload/zhihu++-desktop-*.msi
-            app/build/upload/zhihu++-desktop-*.app.zip
+            app/build/upload/duzhi-full.apk
+            app/build/upload/duzhi-desktop-*.AppImage
+            app/build/upload/duzhi-desktop-*.msi
+            app/build/upload/duzhi-desktop-*.app.zip
           fail_on_unmatched_files: true
           prerelease: true
       - name: Generate release notes
@@ -451,11 +451,11 @@ jobs:
 
             ${{ steps.release_notes.outputs.result }}
           files: |
-            app/build/upload/zhihu++-lite.apk
+            app/build/upload/duzhi-lite.apk
             app/build/upload/mapping-lite.zip
-            app/build/upload/zhihu++-full.apk
-            app/build/upload/zhihu++-desktop-*.AppImage
-            app/build/upload/zhihu++-desktop-*.msi
-            app/build/upload/zhihu++-desktop-*.app.zip
+            app/build/upload/duzhi-full.apk
+            app/build/upload/duzhi-desktop-*.AppImage
+            app/build/upload/duzhi-desktop-*.msi
+            app/build/upload/duzhi-desktop-*.app.zip
           fail_on_unmatched_files: true
           prerelease: false

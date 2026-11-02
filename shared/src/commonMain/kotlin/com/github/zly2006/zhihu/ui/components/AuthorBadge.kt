@@ -17,7 +17,6 @@
 
 package com.github.zly2006.zhihu.ui.components
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.size
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -25,11 +24,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.github.zly2006.zhihu.data.DataHolder
 import com.github.zly2006.zhihu.data.OfficialBadge
-import org.jetbrains.compose.resources.painterResource
-import zhihu.shared.generated.resources.Res
-import zhihu.shared.generated.resources.ic_zh_plus_author_badge
 
 @Composable
 fun AuthorBadge(
@@ -39,21 +34,11 @@ fun AuthorBadge(
 ) {
     if (badge == null) return
     if (badge.iconUrl.isBlank()) return
-    if (badge.iconUrl == DataHolder.ZH_PLUS_AUTHOR_BADGE_ICON) {
-        Image(
-            painter = painterResource(Res.drawable.ic_zh_plus_author_badge),
-            contentDescription = badge.description,
-            modifier = modifier
-                .size(if (compact) 16.dp else 18.dp)
-                .semantics { contentDescription = badge.description },
-        )
-    } else {
-        AsyncImage(
-            model = badge.iconUrl,
-            contentDescription = badge.description,
-            modifier = modifier
-                .size(if (compact) 16.dp else 18.dp)
-                .semantics { contentDescription = badge.description },
-        )
-    }
+    AsyncImage(
+        model = badge.iconUrl,
+        contentDescription = badge.description,
+        modifier = modifier
+            .size(if (compact) 16.dp else 18.dp)
+            .semantics { contentDescription = badge.description },
+    )
 }

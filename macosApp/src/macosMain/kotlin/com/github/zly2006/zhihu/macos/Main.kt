@@ -55,7 +55,7 @@ fun main() {
             ?.let { iconPath -> NSImage(contentsOfFile = iconPath) }
             ?.let(application::setApplicationIconImage)
         Window(
-            title = "Zhihu++",
+            title = "独知",
         ) {
             applicationDelegate.window = window
             window.delegate = applicationDelegate

@@ -41,7 +41,6 @@ sealed interface SystemUpdateState {
         val isNightly: Boolean,
         val releaseNotes: String?,
         val downloadUrl: String,
-        val cnDownloadUrl: String?,
     ) : SystemUpdateState
 
     data object Downloading : SystemUpdateState

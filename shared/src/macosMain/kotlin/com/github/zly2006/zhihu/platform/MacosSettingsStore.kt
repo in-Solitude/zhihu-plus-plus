@@ -158,7 +158,7 @@ private class MacosPropertiesFile(
             )
         }
         val text = buildString {
-            append("#Zhihu++ desktop settings\n")
+            append("#DuZhi desktop settings\n")
             values.forEach { (key, value) ->
                 append(escape(key))
                 append('=')

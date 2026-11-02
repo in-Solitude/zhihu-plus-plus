@@ -104,6 +104,7 @@ import com.github.zly2006.zhihu.ui.subscreens.defaultBottomBarSelectionKeys
 import com.github.zly2006.zhihu.ui.subscreens.normalizeBottomBarSelection
 import com.github.zly2006.zhihu.ui.subscreens.rememberSystemUpdateState
 import com.github.zly2006.zhihu.ui.subscreens.shouldShowAccountHistoryShortcut
+import com.github.zly2006.zhihu.updater.PROJECT_REPOSITORY_URL
 import com.github.zly2006.zhihu.util.Log
 import kotlinx.coroutines.CancellationException
 import org.jetbrains.compose.resources.painterResource
@@ -547,7 +548,7 @@ fun AccountSettingScreen(
                 footer = { Text("本软件仅供学习交流使用，应用内内容由知乎网站提供，著作权归其对应作者所有。") },
             ) {
                 SettingItem(
-                    title = { Text("知乎++") },
+                    title = { Text("独知") },
                     description = { Text("版本号：$versionInfo") },
                     icon = {
                         Image(
@@ -576,10 +577,10 @@ fun AccountSettingScreen(
                 )
                 SettingItem(
                     title = { Text("GitHub 项目地址") },
-                    description = { Text("https://github.com/zly2006/zhihu-plus-plus") },
+                    description = { Text(PROJECT_REPOSITORY_URL) },
                     icon = { Icon(painterResource(Res.drawable.ic_github_24dp), null) },
                     onClick = {
-                        openSystemUrl("https://github.com/zly2006/zhihu-plus-plus")
+                        openSystemUrl(PROJECT_REPOSITORY_URL)
                     },
                     endAction = {
                         Icon(
@@ -595,7 +596,7 @@ fun AccountSettingScreen(
                     description = { Text("AGPL-3.0-only") },
                     icon = { Icon(painterResource(Res.drawable.ic_license_24dp), null) },
                     onClick = {
-                        openSystemUrl("https://github.com/zly2006/zhihu-plus-plus/blob/master/LICENSE")
+                        openSystemUrl("$PROJECT_REPOSITORY_URL/blob/master/LICENSE")
                     },
                     endAction = {
                         Icon(

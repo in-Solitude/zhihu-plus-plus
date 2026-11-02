@@ -123,8 +123,8 @@ class ArticleExportHtmlTest {
         assertTrue(html.contains("导出日期："))
         assertTrue(html.contains("发布日期："))
         assertFalse(html.contains("编辑日期："), "编辑和发布同一时间时不应显示编辑日期")
-        assertTrue(html.contains("知乎++"))
-        assertTrue(html.contains("GitHub地址：https://github.com/zly2006/zhihu-plus-plus"))
+        assertTrue(html.contains("独知"))
+        assertTrue(html.contains("GitHub地址：https://github.com/in-Solitude/zhihu-plus-plus"))
     }
 
     @Test

@@ -79,7 +79,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
@@ -104,7 +103,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import coil3.compose.AsyncImage
-import com.github.zly2006.zhihu.data.DataHolder
 import com.github.zly2006.zhihu.data.VoteUpState
 import com.github.zly2006.zhihu.markdown.RenderMarkdown
 import com.github.zly2006.zhihu.navigation.Article
@@ -119,7 +117,6 @@ import com.github.zly2006.zhihu.platform.isArticleImageExportSupported
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.ui.AnswerDoubleTapAction
-import com.github.zly2006.zhihu.ui.article.AigcFlagSheet
 import com.github.zly2006.zhihu.ui.article.ArticleActionsMenu
 import com.github.zly2006.zhihu.ui.article.ArticleSummarySheet
 import com.github.zly2006.zhihu.ui.article.ArticleVideoAttachmentContent
@@ -251,12 +248,10 @@ fun ArticleScreen(
             }
         }
     }
-    val latestEffectiveScrollMaxValue by rememberUpdatedState(effectiveScrollMaxValue)
     var showComments by rememberSaveable(article.type, article.id) { mutableStateOf(false) }
     var showCollectionDialog by remember { mutableStateOf(false) }
     var showActionsMenu by remember { mutableStateOf(false) }
     var showSummaryDialog by remember { mutableStateOf(false) }
-    var showAigcFlagSheet by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
     var showDoubleTapActionDialog by remember { mutableStateOf(false) }
     var showVoters by rememberSaveable(article.type, article.id) { mutableStateOf(false) }
@@ -295,7 +290,6 @@ fun ArticleScreen(
         !showCollectionDialog &&
         !showActionsMenu &&
         !showSummaryDialog &&
-        !showAigcFlagSheet &&
         !showExportDialog &&
         !showDoubleTapActionDialog &&
         !showVoters
@@ -383,9 +377,6 @@ fun ArticleScreen(
 
     LaunchedEffect(scrollState) {
         snapshotFlow { scrollState.value }.collectLatest { currentScroll ->
-            viewModel.updateAigcReadProgress(currentScroll, effectiveScrollMaxValue)
-            viewModel.syncAigcReadEventIfEligible(environment)
-
             if (viewModel.rememberedScrollYSync) {
                 viewModel.rememberedScrollY = currentScroll
             }
@@ -402,23 +393,6 @@ fun ArticleScreen(
         answerNavigationState.prepareArticle()
         viewModel.loadArticle(environment)
         viewModel.loadCollections(environment)
-        viewModel.loadAigcFlagStatus(environment)
-    }
-
-    LaunchedEffect(article.type, article.id, viewModel.content) {
-        if (viewModel.content.isNotBlank()) {
-            viewModel.updateAigcReadProgress(scrollState.value, latestEffectiveScrollMaxValue)
-            delay(15_000)
-            viewModel.updateAigcReadProgress(scrollState.value, latestEffectiveScrollMaxValue)
-            viewModel.syncAigcReadEventIfEligible(environment)
-        }
-    }
-    LaunchedEffect(scrollState, viewModel.content) {
-        snapshotFlow { effectiveScrollMaxValue }.collectLatest { maxValue ->
-            if (viewModel.content.isNotBlank()) {
-                viewModel.updateAigcReadProgress(scrollState.value, maxValue)
-            }
-        }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
@@ -956,40 +930,27 @@ fun ArticleScreen(
                                 ArticleType.Answer -> "回答"
                                 ArticleType.Article -> "文章"
                             }
-                            val hasVotersSocialCredit = viewModel.votersTotal > 0
-                            if (!hasVotersSocialCredit && viewModel.aigcSupportVoterCount <= 0) return
+                            if (viewModel.votersTotal <= 0) return
                             Spacer(modifier = Modifier.height(8.dp))
-                            if (hasVotersSocialCredit) {
-                                val text = viewModel.votersSocialText.ifBlank {
-                                    "${formatCompactCount(viewModel.votersTotal)} 人赞同了该$contentLabel"
-                                }
-                                val votersTextModifier = if (article.type == ArticleType.Answer) {
-                                    Modifier.clickable {
-                                        showVoters = true
-                                        if (viewModel.voters.isEmpty()) {
-                                            viewModel.loadMoreVoters(environment, reset = true)
-                                        }
+                            val text = viewModel.votersSocialText.ifBlank {
+                                "${formatCompactCount(viewModel.votersTotal)} 人赞同了该$contentLabel"
+                            }
+                            val votersTextModifier = if (article.type == ArticleType.Answer) {
+                                Modifier.clickable {
+                                    showVoters = true
+                                    if (viewModel.voters.isEmpty()) {
+                                        viewModel.loadMoreVoters(environment, reset = true)
                                     }
-                                } else {
-                                    Modifier
                                 }
-                                Text(
-                                    text = text,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = votersTextModifier,
-                                )
+                            } else {
+                                Modifier
                             }
-                            if (viewModel.aigcSupportVoterCount > 0) {
-                                if (hasVotersSocialCredit) {
-                                    Spacer(modifier = Modifier.height(4.dp))
-                                }
-                                Text(
-                                    text = "有 ${formatCompactCount(viewModel.aigcSupportVoterCount)} 人认为此${contentLabel}包含AIGC内容",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                            }
+                            Text(
+                                text = text,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = votersTextModifier,
+                            )
                         }
 
                         if (viewModel.content.isNotEmpty() || viewModel.attachment != null) {
@@ -1009,7 +970,7 @@ fun ArticleScreen(
                                 Spacer(Modifier.height(12.dp))
                             }
                             val hasPinnedDate = pinAnswerDate
-                            val hasSocialCredit = viewModel.votersTotal > 0 || viewModel.aigcSupportVoterCount > 0
+                            val hasSocialCredit = viewModel.votersTotal > 0
                             val endorsements = viewModel.endorsements
                             val hasEndorsements = endorsements.isNotEmpty()
                             if (hasPinnedDate || hasSocialCredit || hasEndorsements) {
@@ -1259,10 +1220,6 @@ fun ArticleScreen(
             showSummaryDialog = true
             viewModel.requestAiSummary(environment)
         },
-        onAigcFlagRequest = {
-            showAigcFlagSheet = true
-            viewModel.loadAigcFlagStatus(environment)
-        },
         onExportRequest = { showExportDialog = true },
         onSetImmersiveDoubleTap = {
             showActionsMenu = false
@@ -1295,13 +1252,6 @@ fun ArticleScreen(
         showActionsMenu = false
     }
 
-    AigcFlagSheet(
-        showDialog = showAigcFlagSheet,
-        viewModel = viewModel,
-        onDismissRequest = { showAigcFlagSheet = false },
-        onSubmitRequest = { viewModel.submitAigcFlag(environment) },
-    )
-
     // 使用新的收藏夹对话框组件
     CollectionDialogComponent(
         showDialog = showCollectionDialog,
@@ -1320,8 +1270,6 @@ fun ArticleScreen(
         showComments = showComments,
         onDismiss = { showComments = false },
         content = article,
-        isZhPlusAuthorContent = article.type == ArticleType.Answer &&
-            viewModel.authorId == DataHolder.ZH_PLUS_AUTHOR_USER_ID,
     )
     VotersSheet(
         show = showVoters,
