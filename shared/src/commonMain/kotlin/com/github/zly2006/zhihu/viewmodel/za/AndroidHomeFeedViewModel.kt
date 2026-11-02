@@ -56,6 +56,7 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
+import com.github.zly2006.zhihu.navigation.Person as PersonDestination
 
 class AndroidHomeFeedViewModel :
     BaseFeedViewModel(),
@@ -290,7 +291,7 @@ fun parseMobileHomeFeedDisplayItem(card: JsonObject): FeedDisplayItem? {
         authorDestination = author
             ?.urlToken
             ?.takeIf { it.isNotBlank() }
-            ?.let { com.github.zly2006.zhihu.navigation.Person(id = author.id, urlToken = it, name = authorName) },
+            ?.let { PersonDestination(id = author.id, urlToken = it, name = authorName) },
     )
 }
 

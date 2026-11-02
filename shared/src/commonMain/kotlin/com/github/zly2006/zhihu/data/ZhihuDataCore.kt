@@ -19,6 +19,7 @@ package com.github.zly2006.zhihu.data
 
 import com.fleeksoft.ksoup.Ksoup
 import kotlinx.serialization.Serializable
+import com.github.zly2006.zhihu.navigation.Person as PersonDestination
 
 @Serializable
 data class FeedDisplayItem(
@@ -31,7 +32,7 @@ data class FeedDisplayItem(
     val authorName: String? = null,
     val authorBadgeV2: DataHolder.BadgeV2? = null,
     /** 安卓端推荐卡片解析出的作者主页，点头像或名字时进入；为空时回退到 [feed] 里的作者（安卓端回答、文章卡片没有 [feed]）。 */
-    val authorDestination: com.github.zly2006.zhihu.navigation.Person? = null,
+    val authorDestination: PersonDestination? = null,
     val isFiltered: Boolean = false,
     val isQualityFiltered: Boolean = false,
     val content: String? = null,
