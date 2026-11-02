@@ -68,6 +68,7 @@ import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTouchInput
+import androidx.compose.ui.test.swipe
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
@@ -107,6 +108,7 @@ import com.hrm.markdown.renderer.MarkdownImageData
 import io.ktor.client.HttpClient
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Rule
@@ -1564,6 +1566,49 @@ class ArticleScreenInstrumentedTest {
             preferences.getFloat("buttonSkipAnswer-x", Float.NaN) > rootWidth / 2
         }
         assertTrue(preferences.getFloat("buttonSkipAnswer-x", Float.NaN) > rootWidth / 2)
+    }
+
+    /**
+     * 回归：自动隐藏后的“下一个回答”按钮只是透明度为 0，仍会接收触摸。
+     * 从它原来的位置滑动正文会被当成拖动按钮：触发长按震动，并把按钮挪到新位置保存下来。
+     */
+    @Test
+    fun hiddenSkipAnswerButtonDoesNotInterceptSwipes() {
+        val viewModel = seededAnswerViewModel(ANSWER)
+        composeRule.setScreenContent {
+            Scaffold(
+                modifier = androidx.compose.ui.Modifier
+                    .fillMaxSize(),
+            ) { _ ->
+                ArticleScreen(
+                    article = ANSWER,
+                    viewModel = viewModel,
+                )
+            }
+        }
+
+        val buttonCenter = composeRule
+            .onNodeWithContentDescription("下一个回答")
+            .assertIsDisplayed()
+            .fetchSemanticsNode()
+            .boundsInRoot.center
+        val rootHeight = composeRule
+            .onRoot()
+            .fetchSemanticsNode()
+            .boundsInRoot.height
+        // 向下阅读，按钮自动隐藏
+        composeRule.onRoot().performTouchInput {
+            swipe(Offset(center.x, height * 0.7f), Offset(center.x, height * 0.3f), durationMillis = 300)
+        }
+        composeRule.waitForIdle()
+
+        composeRule.onRoot().performTouchInput {
+            swipe(buttonCenter, buttonCenter - Offset(0f, rootHeight / 4), durationMillis = 300)
+        }
+        composeRule.waitForIdle()
+
+        val preferences = composeRule.activity.getSharedPreferences(PREFERENCE_NAME, Context.MODE_PRIVATE)
+        assertFalse(preferences.contains("buttonSkipAnswer-y"))
     }
 
     private fun setArticleScreen(pageTurnDispatcher: PageTurnDispatcher? = null) {

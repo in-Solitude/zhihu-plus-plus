@@ -1228,15 +1228,19 @@ fun ArticleScreen(
                     fabClickCount = 0
                 }
             }
-            DraggableRefreshButton(
-                modifier = Modifier.graphicsLayer { alpha = skipButtonAlpha },
-                onClick = { fabClickCount++ },
-                preferenceName = "buttonSkipAnswer",
-            ) {
-                if (answerNavigationState.navigatingToNextAnswer) {
-                    CircularProgressIndicator(modifier = Modifier.size(30.dp))
-                } else {
-                    Icon(Icons.Filled.KeyboardDoubleArrowDown, contentDescription = "下一个回答")
+            // 透明度为 0 的按钮仍会接收触摸：划过它会被当成拖动按钮（触发震动、挪走按钮、挡住正文滚动），
+            // 所以淡出结束后直接移出组合
+            if (showSkipButton || skipButtonAlpha > 0f) {
+                DraggableRefreshButton(
+                    modifier = Modifier.graphicsLayer { alpha = skipButtonAlpha },
+                    onClick = { fabClickCount++ },
+                    preferenceName = "buttonSkipAnswer",
+                ) {
+                    if (answerNavigationState.navigatingToNextAnswer) {
+                        CircularProgressIndicator(modifier = Modifier.size(30.dp))
+                    } else {
+                        Icon(Icons.Filled.KeyboardDoubleArrowDown, contentDescription = "下一个回答")
+                    }
                 }
             }
         }
