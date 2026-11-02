@@ -72,9 +72,10 @@ class BlocklistSettingsScreenInstrumentedTest {
          *    visibility under swipe cycles, and keep the add FAB visible for this tab.
          * 2. Clicking a row must navigate to that asker's Person destination with the seeded id,
          *    urlToken, and display name.
-         * 3. Individual delete, clear-all, and add actions must mutate the real persistent
+         * 3. Individual delete and clear-all actions must mutate the real persistent
          *    blocklist used by the production screen.
-         * 4. The add dialog should support both cancel and confirm paths deterministically.
+         * 4. The add dialog should support cancel, and an entry that cannot be resolved to a
+         *    Zhihu profile must stay in the input without touching the blocklist.
          */
         val dao = getContentFilterDatabase(composeRule.activity).blockedQuestionAuthorDao()
         val navigator = setScreen()
@@ -109,15 +110,15 @@ class BlocklistSettingsScreenInstrumentedTest {
         composeRule.onNodeWithTag(BlocklistSettingsTestTags.USER_DIALOG_DISMISS).performClick()
         assertEquals(0, runBlocking { dao.getUserCount() })
 
+        // 添加要先查知乎资料拿到用户 ID；查不到（含离线）的条目不写入，留在输入框里
         composeRule.onNodeWithTag(BlocklistSettingsTestTags.FAB).performClick()
-        composeRule.onNodeWithTag(BlocklistSettingsTestTags.USER_DIALOG_ID_INPUT).performTextInput("new-asker-id")
-        composeRule.onNodeWithTag(BlocklistSettingsTestTags.USER_DIALOG_NAME_INPUT).performTextInput("新提问者")
+        composeRule.onNodeWithTag(BlocklistSettingsTestTags.USER_DIALOG_ID_INPUT).performTextInput("zhplus-nonexistent-asker-0000")
         composeRule.onNodeWithTag(BlocklistSettingsTestTags.USER_DIALOG_CONFIRM).performClick()
-        composeRule.waitUntil(5_000) { runBlocking { dao.getUserCount() == 1 } }
-        assertEquals(
-            listOf("new-asker-id" to "新提问者"),
-            runBlocking { dao.getAllUsers().map { it.userId to it.userName } },
-        )
+        composeRule.waitUntil(15_000) {
+            composeRule.onAllNodes(hasText("有 1 个没查到", substring = true)).fetchSemanticsNodes().isNotEmpty()
+        }
+        composeRule.onNode(hasText("zhplus-nonexistent-asker-0000")).assertIsDisplayed()
+        assertEquals(0, runBlocking { dao.getUserCount() })
     }
 
     private fun setScreen(): RecordingNavigator = composeRule.setScreenContent {

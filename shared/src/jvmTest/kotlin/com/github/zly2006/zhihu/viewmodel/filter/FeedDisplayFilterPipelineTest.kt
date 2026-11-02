@@ -68,6 +68,27 @@ class FeedDisplayFilterPipelineTest {
     }
 
     @Test
+    fun locallyBlockedAuthorsBecomePlaceholdersWithoutBlockedRecords() = runTest {
+        val fixture = fixture()
+        fixture.database.blockedUserDao().insertUser(BlockedUser(userId = "author-id", userName = "author"))
+
+        val result = fixture
+            .pipeline(detailProvider = provider(1L to article("by blocked author")))
+            .filter(listOf(item("by blocked author", 1)))
+
+        // 卡片本身没带作者名时（如 Android 推荐卡片），规则文案用详情里的作者名
+        assertEquals(listOf(Triple("已屏蔽", "规则：本地屏蔽用户「author」", true)), result.map { Triple(it.title, it.summary, it.isFiltered) })
+        assertEquals(
+            emptyList(),
+            fixture.database
+                .blockedFeedRecordDao()
+                .observeAll()
+                .first(),
+        )
+        fixture.database.close()
+    }
+
+    @Test
     fun keepsFollowedUserItemsOutOfFilteringWhenSettingDisabled() = runTest {
         val fixture = fixture()
         var fetchCount = 0

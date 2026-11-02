@@ -168,12 +168,16 @@ class DesktopPaginationEnvironment(
         contentFilterDb.blockedQuestionAuthorDao().isUserBlocked(userId)
 
     override fun blockedUserIds(): Set<String> =
-        runBlocking {
-            contentFilterDb
-                .blockedUserDao()
-                .getAllUsers()
-                .map { it.userId }
-                .toSet()
+        if (!settingsStore.toFeedFilterSettings().enableUserBlocking) {
+            emptySet()
+        } else {
+            runBlocking {
+                contentFilterDb
+                    .blockedUserDao()
+                    .getAllUsers()
+                    .map { it.userId }
+                    .toSet()
+            }
         }
 
     override suspend fun addBlockedUser(

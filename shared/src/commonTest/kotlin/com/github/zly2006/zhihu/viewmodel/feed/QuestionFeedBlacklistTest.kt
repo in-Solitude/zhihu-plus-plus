@@ -69,6 +69,20 @@ class QuestionFeedBlacklistTest {
     }
 
     @Test
+    fun answersFromLocallyBlockedAuthorsAreFoldedIntoPlaceholders() {
+        val viewModel = ExposedQuestionFeedViewModel(questionId = 1)
+        val feeds = listOf(answerFeed(1, "local", isBlocking = false), answerFeed(2, "kept", isBlocking = false))
+
+        viewModel.process(BlacklistEnvironment(login = "question-local", localBlockedIds = setOf("local")), feeds)
+
+        assertEquals(listOf("local", "kept"), viewModel.allData.map { it.target?.author?.id })
+        assertEquals(
+            listOf("规则：本地屏蔽用户「local」" to true, null to false),
+            viewModel.displayItems.map { it.summary to it.isFiltered },
+        )
+    }
+
+    @Test
     fun answersStayVisibleWhenTheSettingIsOff() {
         val viewModel = ExposedQuestionFeedViewModel(questionId = 1)
         val feeds = listOf(answerFeed(1, "blacklisted", isBlocking = true))

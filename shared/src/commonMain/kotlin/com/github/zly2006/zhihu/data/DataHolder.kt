@@ -689,9 +689,9 @@ object DataHolder {
         val isVisibleOnlyToMyself: Boolean = false,
         @SerialName("_")
         val underscore: JsonElement? = null,
-        /** 作者在当前账号的知乎黑名单里：评论仍留在列表中，界面先显示一行占位，点开才展示。 */
+        /** 命中的屏蔽规则（如“本地屏蔽用户「某人」”）：评论仍留在列表中，界面先显示一行占位，点开才展示。 */
         @Transient
-        val hiddenByZhihuBlacklist: Boolean = false,
+        val blockedRule: String? = null,
     ) {
         @Serializable
         data class Author(

@@ -442,7 +442,7 @@ fun ContentFilterSettingsScreen(
                 val enableUserBlocking = remember { mutableStateOf(settings.getBoolean("enableUserBlocking", true)) }
                 SettingItemWithSwitch(
                     title = { Text("启用用户屏蔽") },
-                    description = { Text("屏蔽特定用户发布的内容，或由特定用户提出的问题") },
+                    description = { Text("本地屏蔽的用户，其内容在各列表折叠成一行“已屏蔽”；屏蔽的提问者，其问题在推荐流中隐藏") },
                     checked = enableUserBlocking.value,
                     onCheckedChange = {
                         enableUserBlocking.value = it

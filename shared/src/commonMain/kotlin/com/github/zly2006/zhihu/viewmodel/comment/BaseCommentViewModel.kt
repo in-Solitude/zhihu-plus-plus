@@ -22,9 +22,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.github.zly2006.zhihu.data.DataHolder
+import com.github.zly2006.zhihu.data.LOCAL_BLOCK_RULE
 import com.github.zly2006.zhihu.navigation.NavDestination
 import com.github.zly2006.zhihu.viewmodel.CommentItem
-import com.github.zly2006.zhihu.viewmodel.ContentBlocklistEnvironment
 import com.github.zly2006.zhihu.viewmodel.PaginationEnvironment
 import com.github.zly2006.zhihu.viewmodel.PaginationViewModel
 import com.github.zly2006.zhihu.viewmodel.ZhihuApiEnvironment
@@ -73,7 +73,8 @@ abstract class BaseCommentViewModel(
 
     override fun processResponse(environment: PaginationEnvironment, data: List<DataHolder.Comment>, rawData: JsonArray) {
         debugData.addAll(rawData) // 保存原始JSON
-        filterBlockedComments(environment, data).forEach { comment ->
+        val blockedUserIds = environment.blockedUserIds()
+        data.map { it.withBlockedRule(blockedUserIds, LOCAL_BLOCK_RULE) }.forEach { comment ->
             if (allData.none { it.id == comment.id }) {
                 // 避免服务器返回重复评论时重复添加，造成LazyColumn key冲突
                 allData.add(comment)
@@ -98,31 +99,28 @@ abstract class BaseCommentViewModel(
             .filter { it.urlToken.isNotBlank() }
             .associate { it.id to it.urlToken }
         val blacklistedIds = ZhihuBlacklist.blockedAuthorIds(environment, authors)
-        if (blacklistedIds.isEmpty()) return data
-        return data.map { comment ->
-            comment.copy(
-                hiddenByZhihuBlacklist = comment.author.id in blacklistedIds,
-                childComments = comment.childComments.map { it.copy(hiddenByZhihuBlacklist = it.author.id in blacklistedIds) },
-            )
+        return data.map { it.withBlockedRule(blacklistedIds, "知乎黑名单用户") }
+    }
+
+    /** 在评论菜单里本地屏蔽作者后，已加载的该作者评论就地折叠，不刷新列表以免丢掉滚动位置。 */
+    fun foldLocallyBlockedAuthor(userId: String) {
+        val ids = setOf(userId)
+        allData.indices.forEach { index ->
+            val folded = allData[index].withBlockedRule(ids, LOCAL_BLOCK_RULE)
+            if (folded != allData[index]) allData[index] = folded
         }
     }
 
-    private fun filterBlockedComments(
-        environment: ContentBlocklistEnvironment,
-        comments: List<DataHolder.Comment>,
-    ): List<DataHolder.Comment> {
-        val blockedUserIds = environment.blockedUserIds()
-        if (blockedUserIds.isEmpty()) return comments
-        return comments.mapNotNull { comment ->
-            if (comment.author.id in blockedUserIds) {
-                null
-            } else {
-                comment.copy(
-                    childComments = comment.childComments.filterNot { it.author.id in blockedUserIds },
-                )
-            }
+    /** 本地屏蔽排在知乎黑名单之后处理，同时命中时显示本地规则。 */
+    private fun DataHolder.Comment.withBlockedRule(ids: Set<String>, rule: String): DataHolder.Comment =
+        if (ids.isEmpty()) {
+            this
+        } else {
+            copy(
+                blockedRule = if (author.id in ids) "$rule「${author.name}」" else blockedRule,
+                childComments = childComments.map { it.withBlockedRule(ids, rule) },
+            )
         }
-    }
 
     abstract fun createCommentItem(comment: DataHolder.Comment, article: NavDestination): CommentItem
 

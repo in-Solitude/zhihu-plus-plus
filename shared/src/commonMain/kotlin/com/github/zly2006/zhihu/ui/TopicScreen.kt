@@ -83,6 +83,8 @@ import com.github.zly2006.zhihu.data.Feed
 import com.github.zly2006.zhihu.data.FeedDisplayItem
 import com.github.zly2006.zhihu.data.ZhihuJson
 import com.github.zly2006.zhihu.data.flattenFeeds
+import com.github.zly2006.zhihu.data.maskLocallyBlockedAuthor
+import com.github.zly2006.zhihu.data.target
 import com.github.zly2006.zhihu.data.toDisplayItem
 import com.github.zly2006.zhihu.data.toFeedDisplayItemNavDestinationJson
 import com.github.zly2006.zhihu.navigation.LocalNavigator
@@ -298,7 +300,10 @@ class TopicViewModel(
                 val feeds = responseItems.mapNotNull { element ->
                     runCatching { ZhihuJson.decodeJson<Feed>(element) }.getOrNull()
                 }
-                feeds.flattenFeeds().map { it.toDisplayItem(enableQualityFilter = false) }
+                val blockedUserIds = environment.blockedUserIds()
+                feeds.flattenFeeds().map {
+                    it.toDisplayItem(enableQualityFilter = false).maskLocallyBlockedAuthor(it.target, blockedUserIds)
+                }
             }
             if (responseItems.isNotEmpty() && loadedItems.isEmpty()) {
                 error("话题内容解码失败：服务端返回 ${responseItems.size} 项，但没有可显示内容")

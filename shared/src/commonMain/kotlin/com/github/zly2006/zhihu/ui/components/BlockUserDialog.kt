@@ -94,7 +94,7 @@ fun FeedAuthorBlockConfirmDialogContent(
                     if (isQuestionAuthor) {
                         "屏蔽后，该用户提出的问题将不会在推荐流中显示；该用户回答别人问题的内容不受影响。"
                     } else {
-                        "屏蔽后，该用户的内容将不会在推荐流中显示。"
+                        "屏蔽后，该用户的回答、文章、想法和评论在各列表里只显示一行“已屏蔽”，点击仍可查看；屏蔽列表只保存在本机。"
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,

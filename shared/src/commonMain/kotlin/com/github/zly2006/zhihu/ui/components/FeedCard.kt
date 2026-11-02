@@ -511,7 +511,7 @@ private fun FeedCardContent(
                     }
                 }
             }
-            if (!thumbnailUrl.isNullOrEmpty() && showFeedThumbnail) {
+            if (!thumbnailUrl.isNullOrEmpty() && showFeedThumbnail && !item.isFiltered) {
                 Spacer(modifier = Modifier.width(8.dp))
                 AsyncImage(
                     model = thumbnailUrl,

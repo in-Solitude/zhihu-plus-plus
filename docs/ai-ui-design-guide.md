@@ -109,7 +109,7 @@ URL 解析集中在 `resolveContent()`。支持知乎问题、回答、文章、
 | `enableContentFilter` | 智能内容过滤 | 过滤重复出现但未点击内容 | 关闭时相关子统计/开关应弱化 |
 | `filterFollowedUserContent` | 过滤已关注用户内容 | 是否过滤关注用户内容 | 仅智能过滤开启时可操作 |
 | `enableKeywordBlocking` | 关键词屏蔽 | 命中关键词时过滤 | 管理入口在 Blocklist |
-| `enableUserBlocking` | 用户屏蔽 | 命中用户时过滤 | Feed 卡片更多菜单可新增屏蔽 |
+| `enableUserBlocking` | 用户屏蔽（本地屏蔽） | 本地屏蔽列表里的作者：首页、关注、问题回答、搜索、话题、收藏夹、他人主页动态里折叠成一行“已屏蔽 · 规则：本地屏蔽用户「…」”占位（点击打开原内容），评论折叠成同样的占位行（点击展开）；屏蔽提问者只在首页推荐里直接隐藏 | 关闭后 `blockedUserIds()` 返回空集；按用户 ID 匹配，被屏蔽者自己的主页不处理；入口有 Feed 卡片菜单、用户主页“本地屏蔽”、评论更多菜单和屏蔽列表页批量添加（支持粘贴主页链接 / url_token / 网页版插件导出的 `\|` 分隔名单） |
 | `hideZhihuBlacklistedUsers` | 隐藏知乎黑名单用户 | 问题回答流、搜索结果中隐藏知乎账号黑名单里的作者；评论保留一行“已屏蔽 · 规则：…”占位，点击才展开 | 默认开启；问题回答流靠 include 取 `is_blocking`，评论和搜索按作者查询并缓存，首页推荐由知乎自己过滤；读取点是 `FeedDisplaySettings` |
 | `enableTopicBlocking` | 主题屏蔽 | 命中主题时过滤 | 阈值项只在开启时显示 |
 | `topicBlockingThreshold` | 主题屏蔽阈值 | 命中主题数量下限 | 必须为大于 0 的整数 |

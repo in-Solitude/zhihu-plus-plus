@@ -60,23 +60,22 @@ class SearchViewModelTest {
     }
 
     @Test
-    fun searchResultsExcludeLocallyBlockedAuthors() {
+    fun searchResultsFoldLocallyBlockedAuthorsIntoPlaceholders() {
         val viewModel = TestSearchViewModel()
         val blocked = answerFeed(id = 1, authorId = "blocked-user")
         val kept = answerFeed(id = 2, authorId = "kept-user")
 
         viewModel.process(environment("{}", blockedUserIds = setOf("blocked-user")), listOf(blocked, kept))
 
-        assertEquals(listOf<Feed>(kept), viewModel.allData)
+        assertEquals(listOf<Feed>(blocked, kept), viewModel.allData)
         assertEquals(
-            listOf("kept-user"),
-            viewModel.displayItems.map {
-                it.feed
-                    ?.target
-                    ?.author
-                    ?.id
-            },
+            listOf(
+                Triple("已屏蔽", "规则：本地屏蔽用户「blocked-user」", true),
+                Triple("问题", null, false),
+            ),
+            viewModel.displayItems.map { Triple(it.title, it.summary, it.isFiltered) },
         )
+        assertEquals(listOf(null, "kept-user"), viewModel.displayItems.map { it.authorName })
     }
 
     @Test

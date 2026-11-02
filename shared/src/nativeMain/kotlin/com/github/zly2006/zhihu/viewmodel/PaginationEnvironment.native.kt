@@ -137,12 +137,16 @@ internal class NativePaginationEnvironment(
     override suspend fun isQuestionAuthorBlocked(userId: String): Boolean =
         contentFilterDatabase.blockedQuestionAuthorDao().isUserBlocked(userId)
 
-    override fun blockedUserIds(): Set<String> = runBlocking {
-        contentFilterDatabase
-            .blockedUserDao()
-            .getAllUsers()
-            .map { it.userId }
-            .toSet()
+    override fun blockedUserIds(): Set<String> = if (!settingsStore.toFeedFilterSettings().enableUserBlocking) {
+        emptySet()
+    } else {
+        runBlocking {
+            contentFilterDatabase
+                .blockedUserDao()
+                .getAllUsers()
+                .map { it.userId }
+                .toSet()
+        }
     }
 
     override suspend fun addBlockedUser(

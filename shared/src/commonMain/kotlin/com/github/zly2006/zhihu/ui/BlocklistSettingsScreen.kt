@@ -72,7 +72,9 @@ import com.github.zly2006.zhihu.navigation.Person
 import com.github.zly2006.zhihu.platform.isBlocklistNlpSupported
 import com.github.zly2006.zhihu.platform.platformName
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
+import com.github.zly2006.zhihu.ui.components.BlockedFeedAuthor
 import com.github.zly2006.zhihu.util.Log
+import com.github.zly2006.zhihu.viewmodel.ZhihuApiEnvironment
 import com.github.zly2006.zhihu.viewmodel.filter.BlockedKeyword
 import com.github.zly2006.zhihu.viewmodel.filter.BlockedQuestionAuthor
 import com.github.zly2006.zhihu.viewmodel.filter.BlockedTopic
@@ -80,7 +82,18 @@ import com.github.zly2006.zhihu.viewmodel.filter.BlockedUser
 import com.github.zly2006.zhihu.viewmodel.filter.BlocklistStats
 import com.github.zly2006.zhihu.viewmodel.filter.KeywordType
 import com.github.zly2006.zhihu.viewmodel.filter.getContentFilterDatabase
+import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
+import io.ktor.http.decodeURLPart
+import io.ktor.http.encodeURLPathPart
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 object BlocklistSettingsTestTags {
     const val ROOT = "blocklistSettings:root"
@@ -105,7 +118,6 @@ object BlocklistSettingsTestTags {
     const val KEYWORD_DIALOG_CONFIRM = "blocklistSettings:keywordDialog:confirm"
     const val KEYWORD_DIALOG_DISMISS = "blocklistSettings:keywordDialog:dismiss"
     const val USER_DIALOG_ID_INPUT = "blocklistSettings:userDialog:userId"
-    const val USER_DIALOG_NAME_INPUT = "blocklistSettings:userDialog:userName"
     const val USER_DIALOG_CONFIRM = "blocklistSettings:userDialog:confirm"
     const val USER_DIALOG_DISMISS = "blocklistSettings:userDialog:dismiss"
     const val TOPIC_DIALOG_ID_INPUT = "blocklistSettings:topicDialog:topicId"
@@ -545,17 +557,18 @@ fun BlocklistSettingsScreen(
     if (showAddUserDialog) {
         AddUserDialog(
             onDismiss = { showAddUserDialog = false },
-            onConfirm = { userId, userName ->
-                coroutineScope.launch {
-                    try {
-                        database.blockedUserDao().insertUser(BlockedUser(userId = userId, userName = userName))
-                        userMessages.showShortMessage("已添加用户")
-                        loadData()
-                        showAddUserDialog = false
-                    } catch (e: Exception) {
-                        Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                        userMessages.showShortMessage("添加失败: ${e.message}")
+            onAdd = { users ->
+                try {
+                    users.forEach {
+                        database.blockedUserDao().insertUser(
+                            BlockedUser(userId = it.id, userName = it.name, urlToken = it.urlToken, avatarUrl = it.avatarUrl),
+                        )
                     }
+                    userMessages.showShortMessage("已添加 ${users.size} 个用户")
+                    loadData()
+                } catch (e: Exception) {
+                    Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
+                    userMessages.showShortMessage("添加失败: ${e.message}")
                 }
             },
         )
@@ -564,21 +577,20 @@ fun BlocklistSettingsScreen(
     if (showAddQuestionAuthorDialog) {
         AddUserDialog(
             title = "添加屏蔽提问者",
-            hint = "添加后会屏蔽该用户提出的问题，不影响该用户回答别人问题的内容",
+            hint = "添加后会屏蔽该用户提出的问题，不影响该用户回答别人问题的内容。可一次粘贴多个",
             onDismiss = { showAddQuestionAuthorDialog = false },
-            onConfirm = { userId, userName ->
-                coroutineScope.launch {
-                    try {
+            onAdd = { users ->
+                try {
+                    users.forEach {
                         database.blockedQuestionAuthorDao().insertUser(
-                            BlockedQuestionAuthor(userId = userId, userName = userName),
+                            BlockedQuestionAuthor(userId = it.id, userName = it.name, urlToken = it.urlToken, avatarUrl = it.avatarUrl),
                         )
-                        userMessages.showShortMessage("已添加屏蔽提问者")
-                        loadData()
-                        showAddQuestionAuthorDialog = false
-                    } catch (e: Exception) {
-                        Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                        userMessages.showShortMessage("添加失败: ${e.message}")
                     }
+                    userMessages.showShortMessage("已添加 ${users.size} 个屏蔽提问者")
+                    loadData()
+                } catch (e: Exception) {
+                    Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
+                    userMessages.showShortMessage("添加失败: ${e.message}")
                 }
             },
         )
@@ -846,45 +858,45 @@ fun AddKeywordDialog(
     )
 }
 
+/**
+ * 添加屏蔽用户：可以一次粘贴多个主页链接、url_token 或用户 ID。逐个查到资料后交给 [onAdd] 写入；
+ * 没查到的留在输入框里，方便检查后重试。
+ */
 @Composable
 fun AddUserDialog(
     title: String = "添加屏蔽用户",
-    hint: String = "提示：可以从用户主页的URL中获取用户ID",
+    hint: String = "可一次粘贴多个，用 | 、空格或换行分隔；网页版插件导出的名单可以直接粘贴",
     onDismiss: () -> Unit,
-    onConfirm: (String, String) -> Unit,
+    onAdd: suspend (List<BlockedFeedAuthor>) -> Unit,
 ) {
-    var userId by remember { mutableStateOf("") }
-    var userName by remember { mutableStateOf("") }
+    val environment = rememberPaginationEnvironment(allowGuestAccess = false)
+    val coroutineScope = rememberCoroutineScope()
+    var input by remember { mutableStateOf("") }
+    var resolving by remember { mutableStateOf(false) }
+    var missingCount by remember { mutableIntStateOf(0) }
 
     AlertDialog(
-        onDismissRequest = onDismiss,
+        // 查询中关掉弹窗会取消协程，查到一半的结果就丢了
+        onDismissRequest = { if (!resolving) onDismiss() },
         title = { Text(title) },
         text = {
             Column {
                 OutlinedTextField(
-                    value = userId,
-                    onValueChange = { userId = it },
-                    label = { Text("用户ID") },
-                    placeholder = { Text("输入用户ID") },
+                    value = input,
+                    onValueChange = { input = it },
+                    label = { Text("主页链接、url_token 或用户 ID") },
+                    enabled = !resolving,
+                    minLines = 2,
+                    maxLines = 6,
                     modifier = Modifier
                         .fillMaxWidth()
                         .testTag(BlocklistSettingsTestTags.USER_DIALOG_ID_INPUT),
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = userName,
-                    onValueChange = { userName = it },
-                    label = { Text("用户名") },
-                    placeholder = { Text("输入用户名（可选）") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(BlocklistSettingsTestTags.USER_DIALOG_NAME_INPUT),
-                )
-                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    hint,
+                    if (missingCount > 0) "有 $missingCount 个没查到或查询失败，已留在输入框里" else hint,
                     style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = if (missingCount > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         },
@@ -892,24 +904,88 @@ fun AddUserDialog(
             Button(
                 modifier = Modifier.testTag(BlocklistSettingsTestTags.USER_DIALOG_CONFIRM),
                 onClick = {
-                    if (userId.isNotBlank()) {
-                        onConfirm(userId, userName.ifBlank { userId })
+                    coroutineScope.launch {
+                        resolving = true
+                        val (found, missing) = resolveZhihuUsers(environment, input)
+                        if (found.isNotEmpty()) onAdd(found)
+                        resolving = false
+                        if (missing.isEmpty()) {
+                            onDismiss()
+                        } else {
+                            input = missing.joinToString("\n")
+                            missingCount = missing.size
+                        }
                     }
                 },
-                enabled = userId.isNotBlank(),
+                enabled = input.isNotBlank() && !resolving,
             ) {
-                Text("添加")
+                Text(if (resolving) "查询中…" else "添加")
             }
         },
         dismissButton = {
             TextButton(
                 modifier = Modifier.testTag(BlocklistSettingsTestTags.USER_DIALOG_DISMISS),
                 onClick = onDismiss,
+                enabled = !resolving,
             ) {
                 Text("取消")
             }
         },
     )
+}
+
+/**
+ * 把粘贴的内容逐项查成知乎用户，返回查到的用户和没查到的原始输入。
+ *
+ * 本地屏蔽按用户 ID 匹配，但主页链接和网页版插件导出的名单（`|` 分隔）里只有 url_token，所以每项都要查一次资料；
+ * 该接口同时接受 url_token 和用户 ID。
+ */
+suspend fun resolveZhihuUsers(
+    environment: ZhihuApiEnvironment,
+    input: String,
+): Pair<List<BlockedFeedAuthor>, List<String>> {
+    val profileLink = Regex("""zhihu\.com/(?:people|org)/([^/?#]+)""")
+    val semaphore = Semaphore(4)
+    val results = coroutineScope {
+        input
+            .split(Regex("""[|\s,，]+"""))
+            .filter(String::isNotBlank)
+            .distinct()
+            .map { entry ->
+                async {
+                    val token = profileLink
+                        .find(entry)
+                        ?.groupValues
+                        ?.get(1)
+                        ?.decodeURLPart() ?: entry
+                    val profile = semaphore.withPermit {
+                        try {
+                            environment.fetchJson("https://api.zhihu.com/people/${token.encodeURLPathPart()}", "")
+                        } catch (e: CancellationException) {
+                            throw e
+                        } catch (e: Exception) {
+                            null
+                        }
+                    }
+                    entry to profile?.let { json ->
+                        val id = json["id"]?.jsonPrimitive?.contentOrNull
+                        val name = json["name"]?.jsonPrimitive?.contentOrNull
+                        if (id.isNullOrBlank() || name == null) {
+                            null
+                        } else {
+                            BlockedFeedAuthor(
+                                id = id,
+                                name = name,
+                                urlToken = json["url_token"]?.jsonPrimitive?.contentOrNull,
+                                avatarUrl = json["avatar_url"]?.jsonPrimitive?.contentOrNull,
+                            )
+                        }
+                    }
+                }
+            }.awaitAll()
+    }
+    val (found, missing) = results.partition { it.second != null }
+    return found.mapNotNull { it.second }.distinctBy(BlockedFeedAuthor::id) to missing.map { it.first }
 }
 
 @Composable

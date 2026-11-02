@@ -70,6 +70,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.ThumbUp
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material.icons.outlined.EmojiEmotions
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material.icons.outlined.ThumbUp
@@ -133,6 +134,7 @@ import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
+import com.github.zly2006.zhihu.account.rememberZhihuAccountStore
 import com.github.zly2006.zhihu.data.DataHolder
 import com.github.zly2006.zhihu.navigation.Article
 import com.github.zly2006.zhihu.navigation.CommentHolder
@@ -149,6 +151,7 @@ import com.github.zly2006.zhihu.platform.rememberImagePreviewOpener
 import com.github.zly2006.zhihu.platform.rememberImageSaver
 import com.github.zly2006.zhihu.platform.rememberImageSharer
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
+import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.reading.ReadingCommentOrder
 import com.github.zly2006.zhihu.reading.loadReadingPreferences
 import com.github.zly2006.zhihu.reading.saveReadingPreferences
@@ -647,6 +650,25 @@ fun CommentScreen(
         }
     }
     val coroutineScope = rememberCoroutineScope()
+    val userMessages = rememberUserMessageSink()
+    val selfId = rememberZhihuAccountStore().session.profile?.id
+
+    // 匿名用户没有 url_token，不能按人屏蔽；自己的评论也不提供
+    fun localBlockAction(comment: DataHolder.Comment): (() -> Unit)? {
+        val author = comment.author
+        if (author.urlToken.isBlank() || author.id == selfId) return null
+        return {
+            coroutineScope.launch {
+                try {
+                    paginationEnvironment.addBlockedUser(author.id, author.name, author.urlToken, author.avatarUrl)
+                    viewModel.foldLocallyBlockedAuthor(author.id)
+                    userMessages.showShortMessage("已本地屏蔽「${author.name}」")
+                } catch (e: Exception) {
+                    userMessages.showShortMessage("屏蔽失败: ${e.message}")
+                }
+            }
+        }
+    }
 
     // 提交评论函数
     fun submitComment() {
@@ -751,6 +773,7 @@ fun CommentScreen(
                                         } else {
                                             null
                                         },
+                                        onLocalBlock = localBlockAction(commentItem.item),
                                     )
 
                                     // 在根评论区时 子评论
@@ -794,6 +817,7 @@ fun CommentScreen(
                                                         } else {
                                                             null
                                                         },
+                                                        onLocalBlock = localBlockAction(childComment),
                                                     )
                                                 }
                                             }
@@ -1253,6 +1277,7 @@ private fun CommentItem(
     onChildCommentClick: (CommentModel) -> Unit,
     onImageMenuAction: ((CommentImageMenuAction, String) -> Unit)? = null,
     onDelete: (() -> Unit)? = null,
+    onLocalBlock: (() -> Unit)? = null,
 ) {
     val navigator = LocalNavigator.current
     val commentData = comment.item
@@ -1263,16 +1288,16 @@ private fun CommentItem(
             urlToken = commentData.author.urlToken,
         )
     var showMoreMenu by remember(commentData.id) { mutableStateOf(false) }
-    var revealBlacklisted by remember(commentData.id) { mutableStateOf(false) }
+    var revealBlocked by remember(commentData.id) { mutableStateOf(false) }
 
-    if (commentData.hiddenByZhihuBlacklist && !revealBlacklisted) {
+    if (commentData.blockedRule != null && !revealBlocked) {
         Text(
-            text = "已屏蔽 · 规则：知乎黑名单用户「${commentData.author.name}」，点击显示",
+            text = "已屏蔽 · 规则：${commentData.blockedRule}，点击显示",
             fontSize = 13.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = modifier
                 .fillMaxWidth()
-                .clickable { revealBlacklisted = true }
+                .clickable { revealBlocked = true }
                 .padding(vertical = 6.dp),
         )
         return
@@ -1441,7 +1466,7 @@ private fun CommentItem(
 
             Spacer(modifier = Modifier.weight(1f))
 
-            if (onDelete != null) {
+            if (onDelete != null || onLocalBlock != null) {
                 Box {
                     IconButton(
                         onClick = { showMoreMenu = true },
@@ -1460,21 +1485,34 @@ private fun CommentItem(
                         expanded = showMoreMenu,
                         onDismissRequest = { showMoreMenu = false },
                     ) {
-                        DropdownMenuItem(
-                            modifier = Modifier.testTag("comment_delete_menu_item_${commentData.id}"),
-                            text = { Text("删除", color = MaterialTheme.colorScheme.error) },
-                            leadingIcon = {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.error,
-                                )
-                            },
-                            onClick = {
-                                showMoreMenu = false
-                                onDelete()
-                            },
-                        )
+                        if (onLocalBlock != null) {
+                            DropdownMenuItem(
+                                modifier = Modifier.testTag("comment_local_block_menu_item_${commentData.id}"),
+                                text = { Text("本地屏蔽") },
+                                leadingIcon = { Icon(Icons.Default.VisibilityOff, contentDescription = null) },
+                                onClick = {
+                                    showMoreMenu = false
+                                    onLocalBlock()
+                                },
+                            )
+                        }
+                        if (onDelete != null) {
+                            DropdownMenuItem(
+                                modifier = Modifier.testTag("comment_delete_menu_item_${commentData.id}"),
+                                text = { Text("删除", color = MaterialTheme.colorScheme.error) },
+                                leadingIcon = {
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error,
+                                    )
+                                },
+                                onClick = {
+                                    showMoreMenu = false
+                                    onDelete()
+                                },
+                            )
+                        }
                     }
                 }
                 Spacer(modifier = Modifier.width(8.dp))

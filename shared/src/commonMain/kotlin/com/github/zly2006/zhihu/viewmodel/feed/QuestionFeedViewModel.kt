@@ -76,14 +76,17 @@ open class QuestionFeedViewModel(
         if (destination.type != ArticleType.Answer) return null
         val index = displayItems.indexOfFirst { it.stableKey == item.stableKey }
         if (index < 0) return null
+        // 本地屏蔽的回答只是折叠成占位，上下切换回答时跳过它们
         return QuestionAnswerNavigator(
             questionId = questionId,
             initialNextAnswers = displayItems
                 .drop(index + 1)
+                .filterNot { it.isFiltered }
                 .mapNotNull { it.navDestination as? Article },
             initialPreviousAnswers = displayItems
                 .take(index)
                 .asReversed()
+                .filterNot { it.isFiltered }
                 .mapNotNull { it.navDestination as? Article },
             initialNextUrl = lastPaging?.next.orEmpty(),
             order = sortOrder,
@@ -106,11 +109,9 @@ open class QuestionFeedViewModel(
     }
 
     override fun processResponse(environment: PaginationEnvironment, data: List<Feed>, rawData: kotlinx.serialization.json.JsonArray) {
-        val blockedUserIds = environment.blockedUserIds()
         val hideBlacklisted = environment.feedDisplaySettings().hideZhihuBlacklistedUsers
         val filtered = data.filterNot { feed ->
-            val author = (feed.target as? Feed.AnswerTarget)?.author
-            author?.id in blockedUserIds || (hideBlacklisted && author?.isBlocking == true)
+            hideBlacklisted && (feed.target as? Feed.AnswerTarget)?.author?.isBlocking == true
         }
         super.processResponse(environment, filtered, rawData)
     }

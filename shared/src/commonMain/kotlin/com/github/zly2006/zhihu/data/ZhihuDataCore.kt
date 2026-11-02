@@ -50,6 +50,32 @@ private val Feed.Target.stableTargetKey: String
         is Feed.VideoTarget -> "video:$id"
     }
 
+/**
+ * 作者在本地屏蔽列表里时换成一行“已屏蔽”占位，和质量屏蔽是同一种卡片，点击仍打开原内容。
+ * 问题卡片的 author 是提问者，归“屏蔽提问者”管，这里不处理。
+ */
+fun FeedDisplayItem.maskLocallyBlockedAuthor(
+    target: Feed.Target?,
+    blockedUserIds: Set<String>,
+): FeedDisplayItem {
+    val author = target?.takeUnless { it is Feed.QuestionTarget }?.author
+    return if (author != null && author.id in blockedUserIds) locallyBlocked(author.name) else this
+}
+
+/** 信息流和评论的占位共用这条规则名，和“知乎黑名单用户”区分。 */
+const val LOCAL_BLOCK_RULE = "本地屏蔽用户"
+
+/** 导航目标仍由 [FeedDisplayItem.feed] / [FeedDisplayItem.navDestinationJson] 提供，这里只换掉标题、摘要和作者展示。 */
+fun FeedDisplayItem.locallyBlocked(authorName: String): FeedDisplayItem = copy(
+    title = "已屏蔽",
+    summary = "规则：$LOCAL_BLOCK_RULE「$authorName」",
+    avatarSrc = null,
+    authorName = null,
+    authorBadgeV2 = null,
+    isFiltered = true,
+    isQualityFiltered = false,
+)
+
 fun List<Feed>.flattenFeeds(): List<Feed> = flatMap {
     (it as? GroupFeed)?.list ?: listOf(it)
 }

@@ -29,6 +29,7 @@ import com.github.zly2006.zhihu.data.Feed
 import com.github.zly2006.zhihu.data.FeedDisplayItem
 import com.github.zly2006.zhihu.data.ZhihuJson
 import com.github.zly2006.zhihu.data.ZhihuPaging
+import com.github.zly2006.zhihu.data.maskLocallyBlockedAuthor
 import com.github.zly2006.zhihu.data.navDestination
 import com.github.zly2006.zhihu.data.toFeedDisplayItemNavDestinationJson
 import kotlinx.coroutines.CancellationException
@@ -105,7 +106,9 @@ class CollectionContentViewModel(
 
     override fun processResponse(environment: PaginationEnvironment, data: List<CollectionItem>, rawData: JsonArray) {
         super.processResponse(environment, data, rawData)
-        displayItems.addAll(data.map { createDisplayItem(it) }) // 展示用的已flatten数据
+        val blockedUserIds = environment.blockedUserIds()
+        // 展示用的已flatten数据
+        displayItems.addAll(data.map { createDisplayItem(it).maskLocallyBlockedAuthor(it.content, blockedUserIds) })
         if (randomPageOffsets != null) {
             randomPageCursor++
         }

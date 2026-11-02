@@ -52,20 +52,78 @@ class BlacklistedCommentAuthorsTest {
 
         viewModel.fetch(environment)
 
-        val hidden = (viewModel.allData + viewModel.allData.flatMap { it.childComments })
-            .associate { it.id to it.hiddenByZhihuBlacklist }
         assertEquals(
             mapOf(
-                "root-kept" to false,
-                "root-blocked" to true,
-                "child-blocked" to true,
-                "child-kept" to false,
-                "child-of-blocked" to false,
+                "root-kept" to null,
+                "root-blocked" to "知乎黑名单用户「blocked」",
+                "child-blocked" to "知乎黑名单用户「blocked」",
+                "child-kept" to null,
+                "child-of-blocked" to null,
             ),
-            hidden,
+            viewModel.blockedRules(),
         )
         assertEquals(listOf("blocked-token", "kept-token"), environment.lookups.sorted())
     }
+
+    @Test
+    fun locallyBlockedAuthorsAreFoldedAndTheLocalRuleWins() = runTest {
+        val environment = BlacklistEnvironment(
+            login = "comment-local",
+            blacklistedTokens = setOf("both-token"),
+            localBlockedIds = setOf("local-id", "both-id"),
+            pages = mapOf(
+                pageUrl to page(
+                    comment("root-local", "local", listOf(comment("child-local", "local"), comment("child-kept", "kept"))),
+                    comment("root-both", "both"),
+                    comment("root-kept", "kept"),
+                ),
+            ),
+        )
+        val viewModel = FetchableBlacklistCommentViewModel(Article(type = ArticleType.Answer, id = 7), pageUrl)
+
+        viewModel.fetch(environment)
+
+        assertEquals(
+            mapOf(
+                "root-local" to "本地屏蔽用户「local」",
+                "child-local" to "本地屏蔽用户「local」",
+                "child-kept" to null,
+                "root-both" to "本地屏蔽用户「both」",
+                "root-kept" to null,
+            ),
+            viewModel.blockedRules(),
+        )
+    }
+
+    @Test
+    fun blockingFromTheMenuFoldsAlreadyLoadedComments() = runTest {
+        val environment = BlacklistEnvironment(
+            login = "comment-menu",
+            pages = mapOf(
+                pageUrl to page(
+                    comment("root-target", "target", listOf(comment("child-kept", "kept"))),
+                    comment("root-kept", "kept", listOf(comment("child-target", "target"))),
+                ),
+            ),
+        )
+        val viewModel = FetchableBlacklistCommentViewModel(Article(type = ArticleType.Answer, id = 7), pageUrl)
+        viewModel.fetch(environment)
+
+        viewModel.foldLocallyBlockedAuthor("target-id")
+
+        assertEquals(
+            mapOf(
+                "root-target" to "本地屏蔽用户「target」",
+                "child-kept" to null,
+                "root-kept" to null,
+                "child-target" to "本地屏蔽用户「target」",
+            ),
+            viewModel.blockedRules(),
+        )
+    }
+
+    private fun BaseCommentViewModel.blockedRules() = (allData + allData.flatMap { it.childComments })
+        .associate { it.id to it.blockedRule }
 
     @Test
     fun commentsStayVisibleWhenTheSettingIsOff() = runTest {
@@ -79,7 +137,7 @@ class BlacklistedCommentAuthorsTest {
 
         viewModel.fetch(environment)
 
-        assertEquals(listOf(false), viewModel.allData.map { it.hiddenByZhihuBlacklist })
+        assertEquals(listOf(null), viewModel.allData.map { it.blockedRule })
         assertEquals(emptyList(), environment.lookups)
     }
 

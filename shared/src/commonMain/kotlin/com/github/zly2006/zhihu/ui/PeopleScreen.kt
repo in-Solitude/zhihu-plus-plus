@@ -203,6 +203,9 @@ class PeopleActivitiesViewModel(
 ) : BaseFeedViewModel() {
     override val initialUrl: String
         get() = "https://www.zhihu.com/api/v3/moments/${person.userTokenOrId}/activities"
+
+    override fun locallyBlockedUserIds(environment: ContentBlocklistEnvironment) =
+        super.locallyBlockedUserIds(environment) - person.id
 }
 
 class PeopleFollowersViewModel(
@@ -777,7 +780,7 @@ fun PeopleScreen(
                                 coroutineScope.launch {
                                     try {
                                         viewModel.toggleRecommendationBlock(paginationEnvironment)
-                                        userMessages.showShortMessage(if (viewModel.isBlockedInRecommendations) "已屏蔽推荐" else "已取消屏蔽推荐")
+                                        userMessages.showShortMessage(if (viewModel.isBlockedInRecommendations) "已本地屏蔽" else "已取消本地屏蔽")
                                     } catch (e: Exception) {
                                         userMessages.showShortMessage("操作失败: ${e.message}")
                                     }
@@ -1789,7 +1792,7 @@ private fun UserInfoHeader(
                 onClick = onRecommendationBlockToggle,
                 modifier = Modifier.testTag(PEOPLE_SCREEN_RECOMMENDATION_BLOCK_BUTTON_TAG),
             ) {
-                Text(if (viewModel.isBlockedInRecommendations) "取消屏蔽推荐" else "屏蔽推荐")
+                Text(if (viewModel.isBlockedInRecommendations) "取消本地屏蔽" else "本地屏蔽")
             }
             OutlinedButton(
                 onClick = onQuestionAuthorBlockToggle,

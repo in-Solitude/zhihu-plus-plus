@@ -69,9 +69,10 @@ class FeedContentFilterPipelineTest {
         )
 
         assertEquals(listOf("keep"), result.kept.map { it.title })
+        // 本地屏蔽的作者不算“已过滤”：上层会换成占位卡片，不进屏蔽记录
+        assertEquals(listOf("by user"), result.authorBlocked.map { it.title })
         assertEquals(
             listOf(
-                "屏蔽作者：author",
                 "屏蔽提问者：asker",
                 "关键词屏蔽",
                 "NLP语义屏蔽：nlp phrase",

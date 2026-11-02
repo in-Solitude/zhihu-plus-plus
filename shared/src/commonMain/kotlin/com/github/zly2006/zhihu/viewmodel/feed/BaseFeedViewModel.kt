@@ -26,8 +26,11 @@ import androidx.lifecycle.viewModelScope
 import com.github.zly2006.zhihu.data.Feed
 import com.github.zly2006.zhihu.data.FeedDisplayItem
 import com.github.zly2006.zhihu.data.flattenFeeds
+import com.github.zly2006.zhihu.data.maskLocallyBlockedAuthor
+import com.github.zly2006.zhihu.data.target
 import com.github.zly2006.zhihu.data.toDisplayItem
 import com.github.zly2006.zhihu.platform.UserMessageSink
+import com.github.zly2006.zhihu.viewmodel.ContentBlocklistEnvironment
 import com.github.zly2006.zhihu.viewmodel.FeedDisplayEnvironment
 import com.github.zly2006.zhihu.viewmodel.HomeFeedFilterResult
 import com.github.zly2006.zhihu.viewmodel.PaginationEnvironment
@@ -50,10 +53,16 @@ abstract class BaseFeedViewModel : PaginationViewModel<Feed>(typeOf<Feed>()) {
 
     override fun processResponse(environment: PaginationEnvironment, data: List<Feed>, rawData: JsonArray) {
         super.processResponse(environment, data, rawData)
-        val loadedItems = data.flattenFeeds().map { createDisplayItem(environment, it) }
+        val blockedUserIds = locallyBlockedUserIds(environment)
+        val loadedItems = data.flattenFeeds().map {
+            createDisplayItem(environment, it).maskLocallyBlockedAuthor(it.target, blockedUserIds)
+        }
         addDisplayItems(loadedItems)
         latestLoadedDisplayItems.value = loadedItems
     }
+
+    /** 本地屏蔽列表；用户主页的动态要放过主页主人自己（和网页版插件一致），由子类去掉。 */
+    protected open fun locallyBlockedUserIds(environment: ContentBlocklistEnvironment): Set<String> = environment.blockedUserIds()
 
     override fun refresh(environment: PaginationEnvironment) {
         displayItems.clear()

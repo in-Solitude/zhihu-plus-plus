@@ -23,6 +23,7 @@ import com.github.zly2006.zhihu.data.Feed
 import com.github.zly2006.zhihu.data.FeedDisplayItem
 import com.github.zly2006.zhihu.data.ZhihuJson
 import com.github.zly2006.zhihu.data.flattenFeeds
+import com.github.zly2006.zhihu.data.maskLocallyBlockedAuthor
 import com.github.zly2006.zhihu.data.navDestination
 import com.github.zly2006.zhihu.data.questionAuthor
 import com.github.zly2006.zhihu.data.target
@@ -176,9 +177,10 @@ class HomeFeedViewModel :
         debugData.addAll(rawData)
 
         viewModelScope.launch {
+            val blockedUserIds = locallyBlockedUserIds(environment)
             val loadedItems = data
                 .flattenFeeds()
-                .map { feed -> createDisplayItem(environment, feed) }
+                .map { feed -> createDisplayItem(environment, feed).maskLocallyBlockedAuthor(feed.target, blockedUserIds) }
             val newItems = if (environment.feedDisplaySettings().qualityFilterMode == QualityFilterMode.HIDE) {
                 loadedItems.filterNot { it.isQualityFiltered }
             } else {

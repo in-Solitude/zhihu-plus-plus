@@ -21,6 +21,7 @@ import com.fleeksoft.ksoup.Ksoup
 import com.github.zly2006.zhihu.data.AdvertisementFeed
 import com.github.zly2006.zhihu.data.DataHolder
 import com.github.zly2006.zhihu.data.FeedDisplayItem
+import com.github.zly2006.zhihu.data.locallyBlocked
 import com.github.zly2006.zhihu.data.navDestination
 import com.github.zly2006.zhihu.data.questionAuthor
 import com.github.zly2006.zhihu.data.target
@@ -93,6 +94,8 @@ private fun isLowQualityForegroundFeed(item: FeedDisplayItem): Boolean =
 data class FeedContentFilterResult(
     val kept: List<FilterableContent>,
     val blocked: List<Pair<FilterableContent, String>>,
+    /** 作者在本地屏蔽列表里：上层折叠成“已屏蔽”占位而不是删掉，所以不进 [blocked] 和屏蔽记录。 */
+    val authorBlocked: List<FilterableContent>,
 )
 
 class FeedContentFilterPipeline(
@@ -106,6 +109,7 @@ class FeedContentFilterPipeline(
 ) {
     suspend fun filter(contents: List<FilterableContent>): FeedContentFilterResult {
         val blocked = mutableListOf<Pair<FilterableContent, String>>()
+        val authorBlocked = mutableListOf<FilterableContent>()
         var filteredContents = contents
 
         if (settings.enableUserBlocking) {
@@ -114,8 +118,7 @@ class FeedContentFilterPipeline(
             val kept = ArrayList<FilterableContent>(filteredContents.size)
             filteredContents.forEach { content ->
                 when {
-                    content.authorId in blockedUserIds ->
-                        blocked.add(content to "屏蔽作者：${content.authorName ?: content.authorId}")
+                    content.authorId in blockedUserIds -> authorBlocked.add(content)
                     content.questionAuthorId in blockedQuestionAuthorIds ->
                         blocked.add(content to "屏蔽提问者：${content.questionAuthorName ?: content.questionAuthorId}")
                     else -> kept.add(content)
@@ -192,7 +195,7 @@ class FeedContentFilterPipeline(
             }
         }
 
-        return FeedContentFilterResult(filteredContents, blocked)
+        return FeedContentFilterResult(filteredContents, blocked, authorBlocked)
     }
 }
 
@@ -280,6 +283,10 @@ class FeedDisplayFilterPipeline(
 
         val contentFilterResult = contentFilterPipeline.filter(nonAdContents)
         val filteredContentIds = contentFilterResult.kept.map { it.contentId }.toSet()
+        // Android 推荐卡片本身不带作者，只能在这里按详情里的作者折叠
+        val blockedAuthorNames = contentFilterResult.authorBlocked.associate {
+            it.contentId to (it.authorName ?: it.raw.author?.name ?: it.authorId.orEmpty())
+        }
 
         val itemToRawMap = itemToFilterableMap.entries.associate { (item, filterable) ->
             filterable.contentId to Pair(item, filterable.raw)
@@ -291,7 +298,7 @@ class FeedDisplayFilterPipeline(
                 val (_, raw) = itemToRawMap[contentId] ?: (null to null)
                 item.copy(raw = raw)
             } else {
-                null
+                blockedAuthorNames[contentId]?.let(item::locallyBlocked)
             }
         }
 

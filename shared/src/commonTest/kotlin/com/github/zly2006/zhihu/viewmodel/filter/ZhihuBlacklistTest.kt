@@ -101,6 +101,7 @@ internal class BlacklistEnvironment(
     var failingTokens: Set<String> = emptySet(),
     private val enabled: Boolean = true,
     private val pages: Map<String, JsonObject> = emptyMap(),
+    private val localBlockedIds: Set<String> = emptySet(),
 ) : PaginationEnvironment {
     val lookups = mutableListOf<String>()
     val includes = mutableSetOf<String>()
@@ -111,6 +112,8 @@ internal class BlacklistEnvironment(
     override fun authenticatedCookies() = mapOf("z_c0" to login)
 
     override fun feedDisplaySettings() = FeedDisplaySettings(hideZhihuBlacklistedUsers = enabled)
+
+    override fun blockedUserIds() = localBlockedIds
 
     override suspend fun fetchJson(url: String, include: String): JsonObject? {
         pages[url]?.let {

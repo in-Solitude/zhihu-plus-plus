@@ -212,12 +212,7 @@ open class SearchViewModel(
         data: List<Feed>,
         rawData: JsonArray,
     ) {
-        val blockedUserIds = environment.blockedUserIds()
-        super.processResponse(
-            environment,
-            data.filterNot { it.target?.author?.id in blockedUserIds },
-            rawData,
-        )
+        super.processResponse(environment, data, rawData)
         if (searchTab != SearchTab.General) return
         if (isPullToRefresh) entities.clear()
         val loadedContent = latestLoadedDisplayItems.value.associateBy(FeedDisplayItem::stableKey)
