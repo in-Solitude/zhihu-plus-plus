@@ -28,6 +28,7 @@ import com.github.zly2006.zhihu.data.FeedDisplayItem
 import com.github.zly2006.zhihu.data.ZhihuJson
 import com.github.zly2006.zhihu.data.target
 import com.github.zly2006.zhihu.util.raiseForStatus
+import com.github.zly2006.zhihu.viewmodel.ContentBlocklistEnvironment
 import com.github.zly2006.zhihu.viewmodel.PaginationEnvironment
 import com.github.zly2006.zhihu.viewmodel.deleteSigned
 import com.github.zly2006.zhihu.viewmodel.filter.ZhihuBlacklist
@@ -105,11 +106,6 @@ open class SearchViewModel(
     override fun refresh(environment: PaginationEnvironment) {
         entities.clear()
         super.refresh(environment)
-    }
-
-    fun retry(environment: PaginationEnvironment) {
-        errorMessage = null
-        loadMore(environment)
     }
 
     override fun decodePage(
@@ -205,6 +201,17 @@ open class SearchViewModel(
             .toMap()
         val blacklistedIds = ZhihuBlacklist.blockedAuthorIds(environment, authors)
         return data.filterNot { it.target?.author?.id in blacklistedIds }
+    }
+
+    // 综合搜索的列表渲染 entities 里的副本，折叠后要同步过去。
+    override fun foldLocallyBlockedAuthors(environment: ContentBlocklistEnvironment) {
+        super.foldLocallyBlockedAuthors(environment)
+        val foldedItems = displayItems.associateBy(FeedDisplayItem::stableKey)
+        entities.indices.forEach { index ->
+            val entity = entities[index] as? SearchEntity.Content ?: return@forEach
+            val folded = foldedItems[entity.id] ?: return@forEach
+            if (folded != entity.item) entities[index] = SearchEntity.Content(folded)
+        }
     }
 
     override fun processResponse(

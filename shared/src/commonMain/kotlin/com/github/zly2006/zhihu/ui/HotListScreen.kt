@@ -19,14 +19,18 @@ package com.github.zly2006.zhihu.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,6 +39,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.zly2006.zhihu.data.HotListFeed
@@ -122,11 +128,27 @@ fun HotListScreen(
                 isEnd = { viewModel.isEnd },
                 footer = ProgressIndicatorFooter,
             ) { item ->
-                FeedCard(
-                    item,
-                    readingQueueSourceId = readingQueueSourceId.takeIf { isActive },
-                    thumbnailUrl = (item.feed as? HotListFeed)?.children?.firstOrNull()?.thumbnail,
-                )
+                // 热榜按接口顺序就是排名，和官方客户端一样在左侧标出名次，前三名高亮。
+                val rank = viewModel.displayItems.indexOfFirst { it.stableKey == item.stableKey } + 1
+                Row {
+                    Text(
+                        text = "$rank",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold,
+                        color = if (rank <= 3) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .padding(start = 12.dp, top = 12.dp)
+                            .width(24.dp),
+                    )
+                    FeedCard(
+                        item,
+                        modifier = Modifier.weight(1f),
+                        readingQueueSourceId = readingQueueSourceId.takeIf { isActive },
+                        thumbnailUrl = (item.feed as? HotListFeed)?.children?.firstOrNull()?.thumbnail,
+                        horizontalPadding = 12.dp,
+                    )
+                }
             }
 
             val showRefreshFab = remember { settings.getBoolean("showRefreshFab", true) }

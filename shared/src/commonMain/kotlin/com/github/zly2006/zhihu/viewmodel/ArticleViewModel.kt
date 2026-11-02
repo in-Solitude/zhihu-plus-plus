@@ -101,6 +101,9 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlin.time.Clock
 
+// 详情接口失败（网络、风控）和内容被删除都只拿到 null，区分不了，提示里两种都说。
+private const val CONTENT_NOT_LOADED_MESSAGE = "你似乎来到了没有知识存在的荒原\n内容可能已被删除，也可能是网络或登录状态异常"
+
 class ArticleViewModel(
     private val article: Article,
     val httpClient: HttpClient?,
@@ -118,6 +121,10 @@ class ArticleViewModel(
     var authorAvatarSrc by mutableStateOf("")
     var authorBadge by mutableStateOf<OfficialBadge?>(null)
     var content by mutableStateOf("")
+
+    /** 正文加载失败的提示；非空时页面显示重试入口，而不是一直空白。 */
+    var loadError by mutableStateOf<String?>(null)
+        private set
     var attachment by mutableStateOf<JsonElement?>(null)
     var voteUpCount by mutableIntStateOf(0)
     var commentCount by mutableIntStateOf(0)
@@ -254,6 +261,7 @@ class ArticleViewModel(
     @OptIn(ExperimentalStdlibApi::class)
     fun loadArticle(environment: ArticleLoadEnvironment) {
         if (httpClient == null) return
+        loadError = null
         viewModelScope.launch {
             withContext(Dispatchers.Default) {
                 try {
@@ -334,7 +342,7 @@ class ArticleViewModel(
                                 }
                             }
                         } else {
-                            content = "<h1>你似乎来到了没有知识存在的荒原</h1>"
+                            loadError = CONTENT_NOT_LOADED_MESSAGE
                             endorsements = emptyList()
                             Log.e("ArticleViewModel", "Answer not found")
                         }
@@ -379,13 +387,14 @@ class ArticleViewModel(
                             )
                             environment.recordOpenEvent(this@ArticleViewModel.article, null)
                         } else {
-                            content = "<h1>你似乎来到了没有知识存在的荒原</h1>"
+                            loadError = CONTENT_NOT_LOADED_MESSAGE
                             Log.e("ArticleViewModel", "Article not found")
                         }
                     }
                 } catch (e: CancellationException) {
                     throw e
                 } catch (e: Exception) {
+                    loadError = "加载失败：${e.message}"
                     Log.e("ArticleViewModel", "Failed to load content", e)
                 }
             }

@@ -78,6 +78,7 @@ private class FetchableCommentViewModel(
         environment: ZhihuApiEnvironment,
         replyToCommentId: String?,
         onSuccess: () -> Unit,
+        onFailure: (String) -> Unit,
     ) = Unit
 
     suspend fun fetch(environment: PaginationEnvironment) = fetchFeeds(environment)

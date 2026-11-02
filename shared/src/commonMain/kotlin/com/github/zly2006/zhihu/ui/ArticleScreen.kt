@@ -98,6 +98,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -617,7 +618,7 @@ fun ArticleScreen(
                                                 Spacer(modifier = Modifier.width(4.dp))
                                                 Icon(painterResource(Res.drawable.ic_vote_up_24dp), "赞同")
                                                 Spacer(modifier = Modifier.width(4.dp))
-                                                Text(text = viewModel.voteUpCount.toString())
+                                                Text(text = formatCompactCount(viewModel.voteUpCount))
                                             }
                                             Button(
                                                 onClick = { viewModel.toggleVoteUp(environment, VoteUpState.Down) },
@@ -640,7 +641,7 @@ fun ArticleScreen(
                                                 Spacer(modifier = Modifier.width(4.dp))
                                                 Icon(painterResource(Res.drawable.ic_vote_up_24dp), "赞同")
                                                 Spacer(modifier = Modifier.width(4.dp))
-                                                Text(text = viewModel.voteUpCount.toString())
+                                                Text(text = formatCompactCount(viewModel.voteUpCount))
                                                 Spacer(modifier = Modifier.width(8.dp))
                                             }
                                         }
@@ -678,7 +679,7 @@ fun ArticleScreen(
                                     ) {
                                         Icon(Icons.AutoMirrored.Filled.Comment, contentDescription = "评论")
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text(text = "${viewModel.commentCount}")
+                                        Text(text = formatCompactCount(viewModel.commentCount))
                                     }
 
                                     IconButton(
@@ -740,7 +741,7 @@ fun ArticleScreen(
                                             )
                                             Spacer(modifier = Modifier.width(4.dp))
                                             Text(
-                                                text = viewModel.voteUpCount.toString(),
+                                                text = formatCompactCount(viewModel.voteUpCount),
                                                 color = upContentColor,
                                                 style = MaterialTheme.typography.titleMedium,
                                             )
@@ -851,7 +852,7 @@ fun ArticleScreen(
                                     ) {
                                         Icon(Icons.AutoMirrored.Filled.Comment, contentDescription = "评论")
                                         Spacer(modifier = Modifier.width(4.dp))
-                                        Text(text = "${viewModel.commentCount}", style = MaterialTheme.typography.titleMedium)
+                                        Text(text = formatCompactCount(viewModel.commentCount), style = MaterialTheme.typography.titleMedium)
                                     }
                                 }
                             }
@@ -1097,6 +1098,30 @@ fun ArticleScreen(
                                         Spacer(modifier = Modifier.height((16 + 36).dp))
                                     },
                                 )
+                            }
+                        } else {
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 96.dp)
+                                    .testTag("article_load_state"),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(16.dp),
+                            ) {
+                                val loadError = viewModel.loadError
+                                if (loadError == null) {
+                                    CircularProgressIndicator()
+                                } else {
+                                    Text(
+                                        text = loadError,
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        textAlign = TextAlign.Center,
+                                    )
+                                    Button(onClick = { viewModel.loadArticle(environment) }) {
+                                        Text("重试")
+                                    }
+                                }
                             }
                         }
                     }

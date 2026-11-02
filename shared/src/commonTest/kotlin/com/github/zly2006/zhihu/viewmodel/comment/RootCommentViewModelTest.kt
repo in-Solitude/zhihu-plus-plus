@@ -17,15 +17,71 @@
 
 package com.github.zly2006.zhihu.viewmodel.comment
 
+import com.github.zly2006.zhihu.data.ZhihuJson
+import com.github.zly2006.zhihu.navigation.Article
+import com.github.zly2006.zhihu.navigation.ArticleType
 import com.github.zly2006.zhihu.navigation.SegmentCommentHolder
+import com.github.zly2006.zhihu.viewmodel.PaginationEnvironment
 import com.github.zly2006.zhihu.viewmodel.comment.RootCommentViewModel.Companion.submitCommentUrl
+import io.ktor.client.HttpClient
+import io.ktor.client.engine.mock.MockEngine
+import io.ktor.client.engine.mock.respond
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.kotlinx.json.json
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.UnconfinedTestDispatcher
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNull
+import kotlin.test.fail
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class RootCommentViewModelTest {
+    @Test
+    fun rejectedCommentReportsFailureWithoutStoppingCommentPaging() = runTest {
+        Dispatchers.setMain(UnconfinedTestDispatcher())
+        try {
+            val viewModel = RootCommentViewModel(Article(type = ArticleType.Answer, id = 7))
+            val failure = CompletableDeferred<String>()
+
+            viewModel.submitComment(
+                content = viewModel.article,
+                commentText = "评论",
+                environment = rejectingEnvironment,
+                onSuccess = { fail("rejected comment must not be reported as sent") },
+                onFailure = { failure.complete(it) },
+            )
+
+            // 界面靠这条回调结束发送转圈并提示；写进 errorMessage 会让评论列表停止加载更多。
+            assertEquals("评论发送失败：403 Forbidden", failure.await())
+            assertNull(viewModel.errorMessage)
+        } finally {
+            Dispatchers.resetMain()
+        }
+    }
+
+    private val rejectingEnvironment = object : PaginationEnvironment {
+        override fun httpClient() = HttpClient(MockEngine { respond("{}", HttpStatusCode.Forbidden) }) {
+            install(ContentNegotiation) { json(ZhihuJson.json) }
+        }
+
+        override fun authenticatedCookies() = emptyMap<String, String>()
+
+        override suspend fun handleFetchFailure(
+            tag: String?,
+            error: Exception,
+        ) = Unit
+    }
+
     @Test
     fun segmentCommentUsesBodyTargetInsteadOfQueryParameter() {
         val target = SegmentCommentHolder(

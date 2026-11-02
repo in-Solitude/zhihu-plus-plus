@@ -31,6 +31,7 @@ import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.buildJsonObject
@@ -76,6 +77,7 @@ class ChildCommentViewModel(
         environment: ZhihuApiEnvironment,
         replyToCommentId: String?,
         onSuccess: () -> Unit,
+        onFailure: (String) -> Unit,
     ) {
         val commentHolder = content as CommentHolder
         if (commentText.isBlank()) return
@@ -102,10 +104,12 @@ class ChildCommentViewModel(
                     allData.add(0, model)
                     onSuccess()
                 } else {
-                    errorMessage = "评论发送失败: ${response.status}"
+                    onFailure("评论发送失败：${response.status}")
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                errorMessage = "评论发送异常: ${e.message}"
+                onFailure("评论发送失败：${e.message}")
             }
         }
     }

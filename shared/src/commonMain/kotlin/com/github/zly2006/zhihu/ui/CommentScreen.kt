@@ -680,21 +680,27 @@ fun CommentScreen(
             commentText = commentFieldValue.text,
             environment = paginationEnvironment,
             replyToCommentId = replyToComment?.item?.id,
-        ) {
-            focusManager.clearFocus(force = true)
-            keyboardController?.hide()
-            commentFieldValue = TextFieldValue("")
-            onCommentInputChange("")
-            replyToComment = null
-            showEmojiPicker = false
-            isSending = false
-            coroutineScope.launch {
-                listState.animateScrollToItem(
-                    0,
-                    0,
-                )
-            }
-        }
+            onSuccess = {
+                focusManager.clearFocus(force = true)
+                keyboardController?.hide()
+                commentFieldValue = TextFieldValue("")
+                onCommentInputChange("")
+                replyToComment = null
+                showEmojiPicker = false
+                isSending = false
+                coroutineScope.launch {
+                    listState.animateScrollToItem(
+                        0,
+                        0,
+                    )
+                }
+            },
+            // 失败时保留输入内容，方便直接再点发送。
+            onFailure = { message ->
+                isSending = false
+                userMessages.showShortMessage(message)
+            },
+        )
     }
 
     Box(
@@ -722,8 +728,15 @@ fun CommentScreen(
                         }
 
                         viewModel.errorMessage != null && viewModel.allData.isEmpty() -> {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Column(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
                                 Text(viewModel.errorMessage!!, color = MaterialTheme.colorScheme.error)
+                                TextButton(onClick = { viewModel.loadMore(paginationEnvironment) }) {
+                                    Text("重试")
+                                }
                             }
                         }
 
@@ -756,13 +769,15 @@ fun CommentScreen(
                                             viewModel.toggleLikeComment(
                                                 commentData = commentItem.item,
                                                 environment = paginationEnvironment,
-                                            ) {
-                                                val newLikeState = !isLiked
-                                                isLiked = newLikeState
-                                                likeCount += if (newLikeState) 1 else -1
-                                                commentItem.item.liked = newLikeState
-                                                commentItem.item.likeCount = likeCount
-                                            }
+                                                onSuccess = {
+                                                    val newLikeState = !isLiked
+                                                    isLiked = newLikeState
+                                                    likeCount += if (newLikeState) 1 else -1
+                                                    commentItem.item.liked = newLikeState
+                                                    commentItem.item.likeCount = likeCount
+                                                },
+                                                onFailure = userMessages::showShortMessage,
+                                            )
                                         },
                                         onChildCommentClick = onChildCommentClick,
                                         onDelete = if (allowDelete && commentItem.item.canDelete) {
@@ -800,13 +815,15 @@ fun CommentScreen(
                                                             viewModel.toggleLikeComment(
                                                                 commentData = childCommentItem.item,
                                                                 environment = paginationEnvironment,
-                                                            ) {
-                                                                val newLikeState = !liked
-                                                                liked = newLikeState
-                                                                likeCount += if (newLikeState) 1 else -1
-                                                                childCommentItem.item.liked = newLikeState
-                                                                childCommentItem.item.likeCount = likeCount
-                                                            }
+                                                                onSuccess = {
+                                                                    val newLikeState = !liked
+                                                                    liked = newLikeState
+                                                                    likeCount += if (newLikeState) 1 else -1
+                                                                    childCommentItem.item.liked = newLikeState
+                                                                    childCommentItem.item.likeCount = likeCount
+                                                                },
+                                                                onFailure = userMessages::showShortMessage,
+                                                            )
                                                         },
                                                         onChildCommentClick = onChildCommentClick,
                                                         onDelete = if (childComment.canDelete) {
@@ -1020,6 +1037,18 @@ fun CommentScreen(
                                         }
                                     }
                                 }
+
+                                // 自动加载更多在失败后会停下（见上面的 errorMessage 判断），这里给出继续的入口。
+                                if (viewModel.errorMessage != null && viewModel.allData.isNotEmpty()) {
+                                    item(key = "load_error") {
+                                        TextButton(
+                                            onClick = { viewModel.loadMore(paginationEnvironment) },
+                                            modifier = Modifier.fillMaxWidth(),
+                                        ) {
+                                            Text("加载失败：${viewModel.errorMessage}，点击重试")
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
@@ -1162,7 +1191,7 @@ fun CommentScreen(
                             IconButton(
                                 onClick = { submitComment() },
                                 modifier = Modifier
-                                    .size(24.dp)
+                                    .size(40.dp)
                                     .testTag(COMMENT_SEND_BUTTON_TAG),
                                 enabled = !isSending && commentFieldValue.text.isNotBlank(),
                             ) {

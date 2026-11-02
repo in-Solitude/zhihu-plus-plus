@@ -32,6 +32,7 @@ import com.github.zly2006.zhihu.viewmodel.deleteSigned
 import com.github.zly2006.zhihu.viewmodel.filter.ZhihuBlacklist
 import com.github.zly2006.zhihu.viewmodel.postSigned
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
@@ -131,12 +132,14 @@ abstract class BaseCommentViewModel(
         }
     }
 
+    // 发送和点赞的失败只回调给界面提示，不写 errorMessage：那是列表加载状态，写进去会让评论列表停止加载更多。
     abstract fun submitComment(
         content: NavDestination,
         commentText: String,
         environment: ZhihuApiEnvironment,
         replyToCommentId: String? = null,
         onSuccess: () -> Unit,
+        onFailure: (String) -> Unit,
     )
 
     var isLikeLoading by mutableStateOf(false)
@@ -145,6 +148,7 @@ abstract class BaseCommentViewModel(
         commentData: DataHolder.Comment,
         environment: ZhihuApiEnvironment,
         onSuccess: () -> Unit,
+        onFailure: (String) -> Unit,
     ) {
         if (isLikeLoading) return
         isLikeLoading = true
@@ -163,10 +167,12 @@ abstract class BaseCommentViewModel(
                 if (response.status.isSuccess()) {
                     onSuccess()
                 } else {
-                    errorMessage = "操作失败：${response.status}"
+                    onFailure("点赞失败：${response.status}")
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
-                errorMessage = "操作失败：${e.message}"
+                onFailure("点赞失败：${e.message}")
             } finally {
                 isLikeLoading = false
             }

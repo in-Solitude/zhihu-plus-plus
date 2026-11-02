@@ -517,6 +517,7 @@ class CommentScreenInstrumentedTest {
             environment: ZhihuApiEnvironment,
             replyToCommentId: String?,
             onSuccess: () -> Unit,
+            onFailure: (String) -> Unit,
         ) = Unit
     }
 
@@ -550,6 +551,7 @@ class CommentScreenInstrumentedTest {
             environment: ZhihuApiEnvironment,
             replyToCommentId: String?,
             onSuccess: () -> Unit,
+            onFailure: (String) -> Unit,
         ) {
             submissions += Submission(commentText, replyToCommentId)
             allData.add(

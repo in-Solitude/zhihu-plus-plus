@@ -547,6 +547,22 @@ fun SearchScreen(
                                             .weight(1f)
                                             .padding(end = 8.dp),
                                     )
+                                    IconButton(
+                                        onClick = {
+                                            searchHistoryItems.remove(query)
+                                            saveSearchHistory(settings, searchHistoryItems)
+                                        },
+                                        modifier = Modifier
+                                            .size(28.dp)
+                                            .testTag("search_history_delete_$query"),
+                                    ) {
+                                        Icon(
+                                            Icons.Default.Clear,
+                                            contentDescription = "删除这条搜索历史",
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                            modifier = Modifier.size(16.dp),
+                                        )
+                                    }
                                 }
                             }
                             if (shouldShowHotSearch) {
@@ -750,7 +766,7 @@ fun SearchScreen(
                             viewModel.errorMessage != null -> {
                                 TextButton(
                                     modifier = Modifier.fillMaxWidth().testTag("search_retry_button"),
-                                    onClick = { viewModel.retry(paginationEnvironment) },
+                                    onClick = { viewModel.loadMore(paginationEnvironment) },
                                 ) {
                                     Text("加载失败：${viewModel.errorMessage}，点击重试")
                                 }
@@ -853,7 +869,7 @@ fun SearchScreen(
         displayItems = viewModel.displayItems,
         onDismiss = { feedAuthorBlockRequest = null },
         onConfirm = {
-            viewModel.refresh(paginationEnvironment)
+            viewModel.foldLocallyBlockedAuthors(paginationEnvironment)
             feedAuthorBlockRequest = null
         },
     )

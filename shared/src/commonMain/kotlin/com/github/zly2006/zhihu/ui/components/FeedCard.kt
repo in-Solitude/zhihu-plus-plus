@@ -20,6 +20,7 @@ package com.github.zly2006.zhihu.ui.components
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -137,6 +138,8 @@ fun FeedCard(
     val showPinImages = showFeedThumbnail && pinImages.isNotEmpty() && !item.isFiltered
     val isSelected = item.navDestination != null && item.navDestination == selectedDestination
     val selectedContainerColor = MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.55f)
+    // 长按和右上角的更多按钮打开同一个菜单；菜单只挂在有详情行的卡片上。
+    val openMenu = { showMenu = true }.takeIf { item.details.isNotEmpty() }
     val performClick: (FeedDisplayItem) -> Unit = { clickedItem ->
         val destination = clickedItem.navDestination?.withReadingQueueSource(readingQueueSourceId)
         if (onClick != null) {
@@ -162,7 +165,7 @@ fun FeedCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { performClick(item) }
+                    .combinedClickable(onLongClick = openMenu) { performClick(item) }
                     .padding(horizontal = horizontalPadding, vertical = 12.dp),
             ) {
                 FeedCardContent(
@@ -202,7 +205,7 @@ fun FeedCard(
                 modifier = Modifier
                     .fillMaxWidth()
                     .let { if (duo3CardAppearance) it.clip(RoundedCornerShape(24.dp)) else it }
-                    .clickable { performClick(item) },
+                    .combinedClickable(onLongClick = openMenu) { performClick(item) },
                 elevation = if (duo3CardAppearance) {
                     CardDefaults.cardElevation()
                 } else {

@@ -64,6 +64,16 @@ abstract class BaseFeedViewModel : PaginationViewModel<Feed>(typeOf<Feed>()) {
     /** 本地屏蔽列表；用户主页的动态要放过主页主人自己（和网页版插件一致），由子类去掉。 */
     protected open fun locallyBlockedUserIds(environment: ContentBlocklistEnvironment): Set<String> = environment.blockedUserIds()
 
+    /** 在卡片菜单里屏蔽作者后，已加载的条目就地折叠，不刷新列表以免丢掉滚动位置（评论那边同样处理）。 */
+    open fun foldLocallyBlockedAuthors(environment: ContentBlocklistEnvironment) {
+        val blockedUserIds = locallyBlockedUserIds(environment)
+        displayItems.indices.forEach { index ->
+            val item = displayItems[index]
+            val folded = item.maskLocallyBlockedAuthor(item.feed?.target, blockedUserIds)
+            if (folded != item) displayItems[index] = folded
+        }
+    }
+
     override fun refresh(environment: PaginationEnvironment) {
         displayItems.clear()
         super.refresh(environment)

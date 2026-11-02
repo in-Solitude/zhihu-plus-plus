@@ -32,8 +32,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -47,14 +50,22 @@ import com.github.zly2006.zhihu.ui.subscreens.DEFAULT_SHOW_CONTENT_END_MARKER
 import com.github.zly2006.zhihu.ui.subscreens.PREF_SHOW_CONTENT_END_MARKER
 import kotlinx.coroutines.delay
 
+private val LocalPaginatedListLoadMore = compositionLocalOf<() -> Unit> { {} }
+
 val ProgressIndicatorFooter: @Composable (LazyListState) -> Unit = { state ->
+    val viewModel = LocalPullToRefreshViewModel.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
             .padding(16.dp),
         contentAlignment = Alignment.Center,
     ) {
-        if (LocalPullToRefreshViewModel.current?.isPullToRefresh != true) {
+        if (viewModel?.errorMessage != null && !viewModel.isLoading) {
+            // 加载失败后列表项数量不再变化，PaginatedList 不会自动再请求；不给入口的话页脚会一直转圈。
+            TextButton(onClick = LocalPaginatedListLoadMore.current) {
+                Text("加载失败：${viewModel.errorMessage}，点击重试", textAlign = TextAlign.Center)
+            }
+        } else if (viewModel?.isPullToRefresh != true) {
             CircularProgressIndicator()
         }
     }
@@ -191,7 +202,9 @@ fun <T> PaginatedList(
                     }
                 }
             } else {
-                footer?.invoke(listState)
+                CompositionLocalProvider(LocalPaginatedListLoadMore provides onLoadMore) {
+                    footer?.invoke(listState)
+                }
             }
         }
         if (isEnd() && items.isNotEmpty() && showContentEndMarker) {

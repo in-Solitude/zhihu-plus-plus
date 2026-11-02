@@ -493,7 +493,7 @@ fun FollowRecommendScreen(
             displayItems = viewModel.displayItems,
             onDismiss = { feedAuthorBlockRequest = null },
             onConfirm = {
-                viewModel.refresh(environment)
+                viewModel.foldLocallyBlockedAuthors(environment)
                 feedAuthorBlockRequest = null
             },
         )
@@ -648,7 +648,7 @@ fun FollowDynamicScreen(
             displayItems = viewModel.displayItems,
             onDismiss = { feedAuthorBlockRequest = null },
             onConfirm = {
-                viewModel.refresh(environment)
+                viewModel.foldLocallyBlockedAuthors(environment)
                 feedAuthorBlockRequest = null
             },
         )

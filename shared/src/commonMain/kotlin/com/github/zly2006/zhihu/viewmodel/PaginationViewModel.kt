@@ -84,7 +84,7 @@ abstract class PaginationViewModel<T : Any>(
     val debugData: MutableList<JsonElement> = mutableListOf()
     var isLoading: Boolean by mutableStateOf(false)
         protected set
-    var errorMessage: String? = null
+    var errorMessage: String? by mutableStateOf(null)
         protected set
     var allowGuestAccess = false
     protected var lastPaging: ZhihuPaging? by mutableStateOf(null)
@@ -176,6 +176,8 @@ abstract class PaginationViewModel<T : Any>(
     @OptIn(DelicateCoroutinesApi::class)
     open fun loadMore(environment: PaginationEnvironment) {
         if (isLoading || isEnd) return // 使用新的isEnd getter
+        // 列表页脚的“点击重试”直接走这里；开始新请求时清掉上次的失败，成功后页脚才会回到正常状态。
+        errorMessage = null
         isLoading = true
         currentJob = viewModelScope.launch {
             try {
