@@ -255,6 +255,7 @@ kotlin {
         }
         jvmTest.dependencies {
             implementation("org.jsoup:jsoup:1.22.2")
+            implementation("org.jetbrains.compose.ui:ui-test:1.11.1")
         }
     }
 }
